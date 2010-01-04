@@ -53,7 +53,7 @@ class MPEGTests(unittest.TestCase):
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testFrameCount(self):
-        """CBR frame count - parse all"""
+        """CBR frame count"""
         self.assertEqual(self.mpeg.frame_count, 7352)
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, True)

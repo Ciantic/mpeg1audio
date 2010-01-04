@@ -946,7 +946,7 @@ class MPEGFrameIterator(object):
         
         self.mpeg = mpeg
         """MPEG which frames are iterated.
-        @type mpeg: L{MPEG<mpegmeta.MPEG>}
+        @type: L{MPEG<mpegmeta.MPEG>}
         """
         
         self._begin_frames = begin_frames
@@ -969,7 +969,18 @@ class MPEGFrameIterator(object):
         pass
     
     def parse_all(self, force=False):
-        """Parse all frames."""
+        """Parse all frames.
+        
+        By parsing all frames, MPEG is ensured to populate following fields 
+        with I{accurate values}:
+        
+            - C{frame_count}
+            - C{bitrate}.
+            
+        @param force: Force re-parsing all frames. Defaults to C{False}.
+        @type force: bool
+        
+        """
         if self._has_parsed_all and not force:
             raise NotImplementedError('This should not happen, ever!') # TODO: DEBUG!
             return
@@ -1074,7 +1085,7 @@ class MPEG(MPEGFrameBase):
     files, only reading out meta data.
     """
     
-    def __init__(self, file, mpeg_start_position = 0, mpeg_end_position = 0, 
+    def __init__(self, file, begin_start_looking = 0, ending_start_looking = 0, 
                  mpeg_test = True):
         """Parses the MPEG file.
         
@@ -1085,11 +1096,20 @@ class MPEG(MPEGFrameBase):
         @param file: File handle returned e.g. by open()
         @type file: file
         
-        @param mpeg_start_position: Start position of MPEG header search.
-        @type mpeg_start_position: int
+        @param begin_start_looking: Start position of MPEG header search. For
+            example if you know that file has ID3v2, it is wise and adviced
+            to give the size of ID3v2 tag to this field.
+            
+            Value B{must be accurate}.
+        @type begin_start_looking: int
         
-        @param mpeg_end_position: End position of MPEG I{relative to end of file}.
-        @type mpeg_end_position: int
+        @param ending_start_looking: End position of MPEG I{relative to end of 
+            file}. For example if you know that file has ID3v1, give C{128}, the 
+            size of ID3v1, this ensures that we can I{at least} skip over that.
+            
+            This value B{does not have to be accurate}, estimation is good enough.
+            
+        @type ending_start_looking: int
         
         @param mpeg_test: Do mpeg test first before continuing with parsing the 
             beginning. This is usefull especially if there is even slight 
@@ -1136,16 +1156,18 @@ class MPEG(MPEGFrameBase):
         self._frame_size = None
         self._size = None
         self._duration = None
+        self._begin_start_looking = begin_start_looking
+        self._ending_start_looking = ending_start_looking
         
         test_frames = []
         if mpeg_test:
             test_frames = list(self._is_mpeg_test())
         
         # Parse beginning of file
-        begin_frames = lambda: self._parse_beginning(mpeg_start_position)
+        begin_frames = lambda: self._parse_beginning(begin_start_looking)
         
         # Parse ending of file, when needed.
-        end_frames = lambda: self._parse_ending()
+        end_frames = lambda: self._parse_ending(ending_start_looking)
         
         self.frames = MPEGFrameIterator(self, begin_frames, end_frames)
         
@@ -1452,8 +1474,8 @@ class MPEG(MPEGFrameBase):
             forward from first found frame.
         @type max_frames: int
         
-        @return List of MPEG frames.
-        @rtype: list of L{MPEGFrames<mpegmeta.MEPGFrame>}
+        @return: List of MPEG frames.
+        @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
         """
         return MPEGFrame.find_and_parse(file = self._file, 
@@ -1476,11 +1498,11 @@ class MPEG(MPEGFrameBase):
         @type min_frames: int
         
         @keyword rewind_offset: When minimum is not met, backdown the offset
-            this much and retry.
-        @type rewind_offset: 4000
+            this much and retry. Defaults to C{4000}.
+        @type rewind_offset: int
         
-        @return List of MPEG frames, amount of items is variable.
-        @rtype: list of L{MPEGFrames<mpegmeta.MEPGFrame>}
+        @return: List of MPEG frames, amount of items is variable.
+        @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
         """
         # min_frames is always positive:
