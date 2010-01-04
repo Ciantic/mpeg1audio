@@ -19,37 +19,50 @@ class MPEGTests(unittest.TestCase):
         self.assertEqual(self.mpeg.frames[2].offset, 3955)
         self.assertEqual(self.mpeg.frames[3].offset, 4791)
         self.assertEqual(self.mpeg.frames[4].offset, 5627)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
     
     def testBitrate(self):
         """CBR bitrate"""
         self.assertEqual(self.mpeg.bitrate, 256)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testDuration(self):
         """CBR duration"""
         self.assertEqual(self.mpeg.duration, timedelta(seconds=192))
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
     
     def testSampleRate(self):
         """CBR sample rate"""
         self.assertEqual(self.mpeg.sample_rate, 44100)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
     
     def testSamplesPerFrame(self):
         """CBR samples per frame"""
         self.assertEqual(self.mpeg.samples_per_frame, 1152)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testFrameSize(self):
         """CBR frame size"""
         self.assertEqual(self.mpeg.frame_size, 836)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testFrameCount(self):
         """CBR frame count - parse all"""
         self.assertEqual(self.mpeg.frame_count, 7352)
-        self.assertEqual(self.mpeg.frame_count, 7352) # Test that we don't parse all two times, cache is in use
-        self.assertEqual(self.mpeg.frame_count, 7352) # ...
-        self.assertEqual(self.mpeg.frame_count, 7352) # ...
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
         
     def testIsVBR(self):
         """CBR is VBR?"""
         self.assertEqual(self.mpeg.is_vbr, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
 class VBRXingTests(unittest.TestCase):
     """VBR Xing header tests."""
@@ -59,64 +72,94 @@ class VBRXingTests(unittest.TestCase):
     def testIsVBR(self):
         """VBR Xing is VBR?"""
         self.assertEqual(self.mpeg.is_vbr, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
     
     def testDuration(self):
         """VBR Xing duration"""
         self.assertEqual(self.mpeg.duration, timedelta(seconds=308))
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
 
     def testFrameSize(self):
         """VBR Xing average frame size"""
         # TODO: Following is not verified!
-        self.assertEqual(self.mpeg.frame_size, 635) 
+        self.assertEqual(self.mpeg.frame_size, 635)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False) 
         
     def testFrameCount(self):
         """VBR Xing frame count"""
         self.assertEqual(self.mpeg.frame_count, 11805)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testBitrate(self):
         """VBR Xing average bitrate"""
         self.assertEqual(int(self.mpeg.bitrate), 194)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testQuality(self):
         """VBR Xing quality"""
         self.assertEqual(self.mpeg.xing.quality, 78)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testOffset(self):
         """VBR Xing offset of header"""
         self.assertEqual(self.mpeg.xing.offset, 4132)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
 class VBRFraunhoferTests(unittest.TestCase):
     """VBR Fraunhofer Encoder header tests."""
     def setUp(self):
         self.mpeg = MPEG(file=open('data/vbr_fraunhofer.mp3', 'rb'))
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testIsVBR(self):
         """VBR Fraunhofer is VBR?"""
         self.assertEqual(self.mpeg.is_vbr, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testBitrate(self):
         """VBR Fraunhofer average bitrate"""
         self.assertEqual(int(self.mpeg.bitrate), 94)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testFrameCount(self):
         """VBR Fraunhofer frame count"""
         self.assertEqual(self.mpeg.frame_count, 8074)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testDelay(self):
         """VBR Fraunhofer delay"""
         self.assertEqual(self.mpeg.vbri.delay, 4630)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testQuality(self):
         """VBR Fraunhofer quality"""
         self.assertEqual(self.mpeg.vbri.quality, 80)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testOffset(self):
         """VBR Fraunhofer offset of VBRI header?"""
         self.assertEqual(self.mpeg.vbri.offset, 4132)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
     
     def testDuration(self):
         """VBR Fraunhofer duration"""
         self.assertEqual(self.mpeg.duration, timedelta(seconds=210))
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
 class VBRHeaderlessTests(unittest.TestCase):
     """VBR headerless tests."""
@@ -126,26 +169,26 @@ class VBRHeaderlessTests(unittest.TestCase):
     def testIsVBR(self):
         """VBR headerless is VBR?"""
         self.assertEqual(self.mpeg.is_vbr, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
     def testBitrate(self):
         """VBR headerless average bitrate"""
         self.assertEqual(int(self.mpeg.bitrate), 94)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
         
     def testFrameCount(self):
         """VBR headerless frame count"""
         self.assertEqual(self.mpeg.frame_count, 8074)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
     
     def testDuration(self):
         """VBR headerless duration"""
         self.assertEqual(self.mpeg.duration, timedelta(seconds=210))
-#        
-#    def testDelay(self):
-#        """VBR headerless delay"""
-#        self.assertEqual(self.mpeg.vbri.delay, 4630)
-#        
-#    def testQuality(self):
-#        """VBR headerless quality"""
-#        self.assertEqual(self.mpeg.vbri.quality, 80)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
 class ChunkedReadTests(unittest.TestCase):
     def setUp(self):

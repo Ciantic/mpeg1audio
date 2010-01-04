@@ -41,7 +41,7 @@ lazily <mpegmeta.MPEG>}. It doesn't parse all frames unless really needed.
 # TODO: LOW: I don't like the verboseness of EpyDoc syntax, maybe change to reStructuredText?
 
 from datetime import timedelta
-import random
+import math
 import string
 import struct
 
@@ -601,13 +601,29 @@ def _genlimit(generator, min, max):
     
     @param generator: Generator
     @type generator: generator
+
+    @param min: Minimum amount of items in generator.
+    @type min: int, or None
     
     @param max: Maximum amount of items.
-    @type max: int
+    @type max: int, or None
     
+    @note: If both are C{None} this returns the same generator.
     @raise ValueError: Raised when minimum is not met.
+    
     """
-    return _genmax(_genmin(generator, min), max)
+    g = generator
+    
+    if (min is None) and (max is None):
+        return g
+    
+    if min is not None:
+        g = _genmin(g, min)
+        
+    if max is not None:
+        g = _genmax(g, max)
+        
+    return g
         
 class MPEGFrameBase(object):
     """MPEG frame base."""
@@ -722,11 +738,14 @@ class MPEGFrame(MPEGFrameBase):
         chunks = chunked_reader(file, chunk_size=_DEFAULT_CHUNK_SIZE, start_position=next_frame_offset)
         return MPEGFrame.parse_consecutive(next_frame_offset, chunks)
     
-    # TODO: Parse ending of file -  get_backward_iterator        
+    # TODO: Parse ending of file -  get_backward_iterator
+    
+    def get_backward_iterator(self, file):
+        raise NotImplementedError('Backward iteration not implemented!')        
     
     def _get_data_offset(self):
         """Data offset getter."""
-        return self.offset+32
+        return self.offset + 32
     
     data_offset = property(_get_data_offset)
     """Offset of MPEG Frame data in file.
@@ -742,7 +761,7 @@ class MPEGFrame(MPEGFrameBase):
     
     @classmethod
     def find_and_parse(cls, file, max_frames = 3, chunk_size = _DEFAULT_CHUNK_SIZE, 
-                       begin_frame_search = -1, lazily_after = 1, 
+                       begin_frame_search = -1, lazily_after = 1,
                        max_chunks = None, max_consecutive_chunks = None):
         """Find and parse from file.
         
@@ -773,6 +792,7 @@ class MPEGFrame(MPEGFrameBase):
             returned lazy generator. C{None} means that there is no maximum, 
             goes to end of file if neccessary. Defaults to C{None}. 
         @type max_consecutive_chunks: int, or None
+        
         """
         chunk_size = max(chunk_size, 4)
         chunks = chunked_reader(file, chunk_size = chunk_size, 
@@ -911,19 +931,16 @@ class MPEGFrame(MPEGFrameBase):
     
 class MPEGFrameIterator(object):
     """MPEG Frame iterator, for lazy evaluation."""
-    def __init__(self, mpeg, begin_frames, test_frames=None, end_frames=None):
+    def __init__(self, mpeg, begin_frames, end_frames):
         """Create MPEG frame iterator.
         @param mpeg: MPEG Which frames are to be iterated over.
         @type mpeg: L{MPEG<mpegmeta.MPEG>}
         
         @param begin_frames: First frames of MPEG.
-        @type begin_frames: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
-        
-        @keyword test_frames: Testing frames of MPEG.
-        @type test_frames: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @type begin_frames: function giving list of L{MPEGFrame<mpegmeta.MPEGFrame>}
          
-        @keyword end_frames: End frames of MPEG. 
-        @type end_frames: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @param end_frames: End frames of MPEG. 
+        @type end_frames: function giving list of L{MPEGFrame<mpegmeta.MPEGFrame>}
         
         """
         
@@ -932,37 +949,32 @@ class MPEGFrameIterator(object):
         @type mpeg: L{MPEG<mpegmeta.MPEG>}
         """
         
-        self.begin_frames = begin_frames
+        self._begin_frames = begin_frames
         """Begin frames.
         
         @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
         """
         
-        self.test_frames = test_frames or []
-        """Tested frames.
-        
-        @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
-        """
-        
-        self.end_frames = end_frames or []
+        self._end_frames = end_frames
         """End frames.
         
-        @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}, or None
         """
         
         self._has_parsed_all = False
+        self._has_parsed_beginning = not callable(self._end_frames)
+        self._has_parsed_ending = not callable(self._begin_frames)
     
     def __len__(self):
         pass
     
-    def parse_all(self):
+    def parse_all(self, force=False):
         """Parse all frames."""
-        if self._has_parsed_all:
-            raise NotImplementedError('This should not happen, ever!')
+        if self._has_parsed_all and not force:
+            raise NotImplementedError('This should not happen, ever!') # TODO: DEBUG!
+            return
         
         avg_bitrate = 0
-        
-        # print "Parsing all frames... sorry!"
         
         for index, frame in enumerate(self):
             avg_bitrate += frame.bitrate
@@ -980,11 +992,26 @@ class MPEGFrameIterator(object):
     
     def __iter__(self):
         # Join begin frames, and generator yielding next frames from that on.
-        return join_iterators(self.begin_frames, 
-                              self.begin_frames[-1].get_forward_iterator(self.mpeg._file))
+        return join_iterators(self._begin_frames, 
+                              self._begin_frames[-1].get_forward_iterator(self.mpeg._file))
     
     def __getitem__(self, key):
-        return self.begin_frames[key] # TODO: Insufficient
+        # TODO: Following is misleading, _begin_frames and _end_frames does not
+        #     include all keys, works for now.
+        if key < 0:
+            # Lazy evaluate
+            if callable(self._end_frames):
+                self._end_frames = list(self._end_frames())
+                self._has_parsed_ending = True
+                
+            return self._end_frames[key]
+        else:
+            # Lazy evaluate
+            if callable(self._begin_frames):
+                self._begin_frames = list(self._begin_frames())
+                self._has_parsed_beginning = True
+                
+            return self._begin_frames[key]
 
 class MPEG(MPEGFrameBase):
     """
@@ -1047,21 +1074,22 @@ class MPEG(MPEGFrameBase):
     files, only reading out meta data.
     """
     
-    def __init__(self, file, mpeg_start_position=0,  
-                 parse_all_frames=False, mpeg_test=True):
+    def __init__(self, file, mpeg_start_position = 0, mpeg_end_position = 0, 
+                 mpeg_test = True):
         """Parses the MPEG file.
         
         @todo: If given filename, create file and close it always automatically 
             when not needed.
         @todo: C{parse_all_frames} is not implemented!
+        
         @param file: File handle returned e.g. by open()
         @type file: file
         
         @param mpeg_start_position: Start position of MPEG header search.
         @type mpeg_start_position: int
         
-        @param parse_all_frames: Should we parse all frames? Defaults to false.
-        @type parse_all_frames: bool
+        @param mpeg_end_position: End position of MPEG I{relative to end of file}.
+        @type mpeg_end_position: int
         
         @param mpeg_test: Do mpeg test first before continuing with parsing the 
             beginning. This is usefull especially if there is even slight 
@@ -1111,45 +1139,57 @@ class MPEG(MPEGFrameBase):
         
         test_frames = []
         if mpeg_test:
-            test_frames = self._is_mpeg_test()
+            test_frames = list(self._is_mpeg_test())
         
         # Parse beginning of file
-        begin_frames = list(self._parse_beginning(mpeg_start_position))
+        begin_frames = lambda: self._parse_beginning(mpeg_start_position)
         
-        # TODO: Parse ending of file.
+        # Parse ending of file, when needed.
+        end_frames = lambda: self._parse_ending()
+        
+        self.frames = MPEGFrameIterator(self, begin_frames, end_frames)
         
         # Set MPEG Details
-        self._set_mpeg_details(begin_frames[0], begin_frames[1:] + list(test_frames))
-
-        self.frames = MPEGFrameIterator(self, begin_frames, test_frames=test_frames) # TODO: Parse ending. end_frames=end_frames)
+        self._set_mpeg_details(self.frames[0], test_frames)
         
         # Parse VBR Headers if can be found.
-        self._parse_xing(begin_frames)
-        self._parse_vbri(begin_frames)
+        self._parse_xing()
+        self._parse_vbri()
         
-        
-    def _get_size(self, parse_all=False, parse_ending=True, parse_beginning=True):
+    def _get_size(self, parse_all=False, parse_ending=True):
         """MPEG Size getter.
         
         @rtype: int, or None
+        
         """
         if self._size is not None:
             return self._size
         
-        # TODO: Parse ending of file.
-        self.size = self.filesize - self.frames[0].offset
+        if parse_ending: 
+            self.size = self.frames[-1].data_offset + self.frames[-1].size - self.frames[0].offset
+        else:
+            # TODO: Estimation of size, this might be a good enough for 99% of time,
+            # maybe it should be default? A biggest risk is that files with a *huge*
+            # footer will yield totally inaccurate values, is that risk too big?
+            #
+            # Should we choose a higher accuracy over performance with 99% of cases? 
+            self.size = self.filesize - self.frames[0].offset
+            
+        if parse_all:
+            self.frames.parse_all()
+            
         return self._size
         
     def _set_size(self, value):
         """MPEG Size setter."""
         self._size = value
     
-    def _get_sample_count(self, parse_all=False, parse_beginning=True, parse_ending=True):
+    def _get_sample_count(self, parse_all=False, parse_ending=True):
         """Sample count getter.
         
         @rtype: int, or None
         """      
-        frame_count = self._get_frame_count(parse_all, parse_beginning, parse_ending)
+        frame_count = self._get_frame_count(parse_all, parse_ending)
         if frame_count is not None:  
             return self.frame_count * self.samples_per_frame
         return None
@@ -1183,8 +1223,22 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            # TODO: Parse ending and calculate frame count.
-            self.frames.parse_all()
+            # TODO: Estimation, how do we estimate padded and unpadded?:
+            first_frame = self.frames[0]
+            unpadded_frame_size = first_frame.size - first_frame._padding_size
+            #unpadded_frames = float(self.size) / float(unpadded_frame_size)
+            
+            padded_frame_size = unpadded_frame_size + 1
+            padded_frames = float(self.size) / float(padded_frame_size)
+            
+            # Does this work for other files?
+            self._frame_count = math.ceil(padded_frames)
+            
+            # Average it aint:
+            #print unpadded_frames, padded_frames
+            #return int(round((unpadded_frames + padded_frames) / float(2)))
+        
+            #self.frames.parse_all()
         else:
             # VBR
             self.frames.parse_all()
@@ -1228,13 +1282,12 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            mpeg_size = self._get_size(parse_all)
+            mpeg_size = self._get_size()
             bitrate = self._get_bitrate(parse_all)
             if (bitrate is not None) and (mpeg_size is not None):
                 self.duration = _get_cbr_duration(mpeg_size=self.size, bitrate=self.bitrate)
         else:
             # VBR
-            
             sample_count = self._get_sample_count(parse_all)
             if sample_count is not None:
                 self.duration = _get_vbr_duration(sample_count, self.sample_rate)
@@ -1260,7 +1313,7 @@ class MPEG(MPEGFrameBase):
     @note: May start parsing of all frames. 
     @type: int
     """
-        
+    
     frame_size = property(_get_frame_size, _set_frame_size)
     """Frame size in bytes.
      
@@ -1291,26 +1344,26 @@ class MPEG(MPEGFrameBase):
     @type: datetime.timedelta
     """
     
-    def _parse_xing(self, first_frames):
+    def _parse_xing(self):
         """Tries to parse and set XING from first mpeg frame.
         @see: L{MPEG.xing<mpegmeta.MPEG.xing>}
         @see: L{XING<mpegmeta.XING>}
         """
         try:
-            self.xing = XING.find_and_parse(self._file, first_frames[0].offset)
+            self.xing = XING.find_and_parse(self._file, self.frames[0].offset)
         except XINGHeaderException:
             pass  
         else:
             VBRHeader.set_mpeg(self, self.xing)
             
-    def _parse_vbri(self, first_frames):
+    def _parse_vbri(self):
         """Tries to parse and set VBRI from first mpeg frame.
         @see: L{MPEG.vbri<mpegmeta.MPEG.vbri>}
         @see: L{VBRI<mpegmeta.VBRI>}
         """
         # Tries to parse VBRI Header in first mpeg frame.
         try:
-            self.vbri = VBRI.find_and_parse(self._file, first_frames[0].offset)
+            self.vbri = VBRI.find_and_parse(self._file, self.frames[0].offset)
         except VBRIHeaderException:
             pass  
         else:
@@ -1372,6 +1425,10 @@ class MPEG(MPEGFrameBase):
         self.samples_per_frame = first_mpegframe.samples_per_frame
         self.frame_size = first_mpegframe.size
         self.bitrate = first_mpegframe.bitrate
+
+        # If no testing frames was given, resort to getting last three frames.
+        if len(mpegframes) == 0:
+            mpegframes = self.frames[-3:]
         
         # If any of the bitrates differ, this is most likely VBR. 
         self.is_vbr = any(mpegframe.bitrate != first_mpegframe.bitrate for mpegframe in mpegframes)
@@ -1381,15 +1438,68 @@ class MPEG(MPEGFrameBase):
             self.frame_size = None
             self.frame_count = None
     
-    def _parse_all(self):
-        pass
+    def parse_all(self, force=False):
+        """Parse all frames."""
+        self.frames.parse_all()
     
-    def _parse_beginning(self, begin_offset=0, max_frame_count=6):
-        return MPEGFrame.find_and_parse(file = self._file, max_frames=max_frame_count, begin_frame_search=begin_offset)
+    def _parse_beginning(self, begin_offset=0, max_frames=6):
+        """Parse beginning of MPEG.
+        
+        @keyword begin_offset: Beginning offset, from beginning of file.
+        @type begin_offset: int
+        
+        @keyword max_frames: Maximum of frames to be parsed, and returned 
+            forward from first found frame.
+        @type max_frames: int
+        
+        @return List of MPEG frames.
+        @rtype: list of L{MPEGFrames<mpegmeta.MEPGFrame>}
+        
+        """
+        return MPEGFrame.find_and_parse(file = self._file, 
+                                        max_frames = max_frames, 
+                                        begin_frame_search = begin_offset)
     
-    def _parse_ending(self, end_offset=0, max_frame_count=6):
-        #"self._file.seek()
-        pass
+    def _parse_ending(self, end_offset = 0, min_frames = 3, 
+                      rewind_offset = 4000): # TODO: 4000 is "educated guess"...
+        """Parse ending of MPEG.
+        
+        @note: Performance wisely the max_frames argument would be useless, and 
+        is not implemented. As this method must try recursively find_and_parse
+        further and further from the ending until minimum of frames is met.        
+        
+        @keyword end_offset: End offset as relative to I{end of file}, if you
+            know the I{size of footers}, give that.
+        @type end_offset: int
+        
+        @keyword min_frames: Minimum amount of frames from the end of file.
+        @type min_frames: int
+        
+        @keyword rewind_offset: When minimum is not met, backdown the offset
+            this much and retry.
+        @type rewind_offset: 4000
+        
+        @return List of MPEG frames, amount of items is variable.
+        @rtype: list of L{MPEGFrames<mpegmeta.MEPGFrame>}
+        
+        """
+        # min_frames is always positive:
+        min_frames = max(min_frames, 1)
+        
+        begin_frame_search = self.filesize - end_offset
+        end_frames = []
+        
+        while True:
+            # Oh noes, not enough frames.
+            if len(end_frames) < min_frames:
+                begin_frame_search -= rewind_offset
+                
+                # Retry from backwards...
+                end_frames = list(MPEGFrame.find_and_parse(file = self._file, 
+                                                   max_frames = None, 
+                                                   begin_frame_search = begin_frame_search))
+            else:
+                return end_frames
         
 class MpegException(Exception):
     """MPEG Exception, all MPEG related exceptions inherit from this."""
@@ -1411,11 +1521,11 @@ class MpegHeaderException(MpegException):
         super(MpegHeaderException, self).__init__(message)
         
         self.mpeg_offset = mpeg_offset
-        """MPEG Offset withing file
+        """MPEG Offset within file
         @type: int"""
         
         self.bad_offset = bad_offset
-        """Bad offset withing file
+        """Bad offset within file
         @type: int"""
 
 class MpegHeaderEOFException(MpegHeaderException):
