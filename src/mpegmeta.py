@@ -81,9 +81,9 @@ def _get_header_mpeg_version(bits):
     
     """
     mpeg_versions = {
-        int('00', 2) : '2.5',
-        int('10', 2) : '2',
-        int('11', 2) : '1',
+        0 : '2.5',
+        2 : '2',
+        3 : '1',
     }
     
     try:
@@ -104,9 +104,9 @@ def _get_header_layer(bits):
     
     """
     layers = {
-        int('01', 2) : '3',
-        int('10', 2) : '2',
-        int('11', 2) : '1',
+        1 : '3',
+        2 : '2',
+        3 : '1',
     }
     
     try:
