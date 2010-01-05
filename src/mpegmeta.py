@@ -876,9 +876,9 @@ class MPEGFrame(MPEGFrameBase):
                     if previous_mpegframe.size is None:
                         return
                         # TODO: Free bitrate, you must search for the second frame.
-                    next_mpegframe_offset = previous_mpegframe_offset+previous_mpegframe.size
+                    next_mpegframe_offset = previous_mpegframe_offset + previous_mpegframe.size
                 next_mpegframe = None
-                next_header_offset = next_mpegframe_offset-chunk_offset
+                next_header_offset = next_mpegframe_offset - chunk_offset
                 
                 # Get header bytes within chunk
                 try:
@@ -890,7 +890,7 @@ class MPEGFrame(MPEGFrameBase):
                 # Parse and append if parseable
                 try:
                     next_mpegframe = MPEGFrame.parse(header_bytes)
-                except MpegHeaderException, e:
+                except MpegHeaderException:
                     return
                 else:
                     # Frame was parsed successfully
@@ -1708,7 +1708,7 @@ class XING(VBRHeader):
                 cur += 4
             
             if has_toc:
-                toc_chunk = chunk[cur:cur+100]
+                toc_chunk = chunk[cur:cur+100] #@UnusedVariable
                 # TODO: TOC!
                 cur += 100
             
@@ -1782,16 +1782,16 @@ class VBRI(VBRHeader):
             
             fs = beginning_of_vbri
             fs += 4 # Size of "VBRI"
-            entries_in_toc = 0
-            scale_factor_of_toc = 0
-            size_per_table = 0
-            frames_per_table = 0
+            entries_in_toc = 0 #@UnusedVariable
+            scale_factor_of_toc = 0 #@UnusedVariable
+            size_per_table = 0 #@UnusedVariable
+            frames_per_table = 0 #@UnusedVariable
             
             (self.version, self.delay, self.quality, self.mpeg_size,  
-             self.frame_count, entries_in_toc, scale_factor_of_toc, 
-             size_per_table, frames_per_table) = struct.unpack('>HHHIIHHHH', chunk[fs:fs+22])
+             self.frame_count, entries_in_toc, scale_factor_of_toc, #@UnusedVariable
+             size_per_table, frames_per_table) = struct.unpack('>HHHIIHHHH', chunk[fs:fs+22]) #@UnusedVariable
              
-             # TODO: TOC!
+            # TODO: TOC!
             
             return self 
         
