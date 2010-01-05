@@ -46,7 +46,7 @@ import math
 import string
 import struct
 
-PARSE_ALL_CHUNK_SIZE = 102400
+PARSE_ALL_CHUNK_SIZE = 153600
 """Chunk size of parsing all frames.
 @type: int"""
 
@@ -65,7 +65,13 @@ def _check_header_sync_bits(bits):
     """
     if (bits & 2047) != 2047:
         raise MpegHeaderException('Sync bits does not match.')
-
+    
+_mpeg_versions = {
+    0 : '2.5',
+    2 : '2',
+    3 : '1',
+}
+    
 def _get_header_mpeg_version(bits):
     """Get MPEG version from header bits.
     
@@ -80,16 +86,17 @@ def _get_header_mpeg_version(bits):
     @raise mpegmeta.MpegHeaderException: Raised when layer cannot be determined.
     
     """
-    mpeg_versions = {
-        0 : '2.5',
-        2 : '2',
-        3 : '1',
-    }
     
     try:
-        return mpeg_versions[bits]
+        return _mpeg_versions[bits]
     except (KeyError, IndexError):
         raise MpegHeaderException('Unknown MPEG version.')
+    
+_layers = {
+    1 : '3',
+    2 : '2',
+    3 : '1',
+}
     
 def _get_header_layer(bits):
     """Get layer from MPEG Header bits.
@@ -103,17 +110,29 @@ def _get_header_layer(bits):
     @raise mpegmeta.MpegHeaderException: Raised when layer cannot be determined.
     
     """
-    layers = {
-        1 : '3',
-        2 : '2',
-        3 : '1',
-    }
+
     
     try:
-        return layers[bits]
+        return _layers[bits]
     except (KeyError, IndexError):
         raise MpegHeaderException('Unknown Layer version')
 
+_bitrate_by_layer_for_mpeg_version_2_and_2_5 = {
+    '1': (0,32,48,56, 64, 80, 96,112,128,144,160,176,192,224,256),
+    '2': (0, 8,16,24, 32, 40, 48, 56, 64, 80, 96,112,128,144,160),
+    '3': (0, 8,16,24, 32, 40, 48, 56, 64, 80, 96,112,128,144,160),
+}
+
+_bitrate_by_layer_and_mpeg_version = {
+    '1': {
+        '1': (0,32,64,96,128,160,192,224,256,288,320,352,384,416,448),
+        '2': (0,32,48,56, 64, 80, 96,112,128,160,192,224,256,320,384),
+        '3': (0,32,40,48, 56, 64, 80, 96,112,128,160,192,224,256,320),
+    },
+    '2' : _bitrate_by_layer_for_mpeg_version_2_and_2_5,
+    '2.5' : _bitrate_by_layer_for_mpeg_version_2_and_2_5,
+} 
+    
 def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
     """ Get bitrate by mpeg version, layer_bitsbitrate_bitstrate bits index.
     
@@ -134,27 +153,18 @@ def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
     @raise mpegmeta.MpegHeaderException: Raised when bitrate cannot be determined.
     
     """
-    bitrate_by_layer_for_mpeg_version_2_and_2_5 = {
-        '1': (0,32,48,56, 64, 80, 96,112,128,144,160,176,192,224,256),
-        '2': (0, 8,16,24, 32, 40, 48, 56, 64, 80, 96,112,128,144,160),
-        '3': (0, 8,16,24, 32, 40, 48, 56, 64, 80, 96,112,128,144,160),
-    }
-    
-    bitrate_by_layer_and_mpeg_version = {
-        '1': {
-            '1': (0,32,64,96,128,160,192,224,256,288,320,352,384,416,448),
-            '2': (0,32,48,56, 64, 80, 96,112,128,160,192,224,256,320,384),
-            '3': (0,32,40,48, 56, 64, 80, 96,112,128,160,192,224,256,320),
-        },
-        '2' : bitrate_by_layer_for_mpeg_version_2_and_2_5,
-        '2.5' : bitrate_by_layer_for_mpeg_version_2_and_2_5,
-    } 
     
     try:
-        return bitrate_by_layer_and_mpeg_version[mpeg_version][layer][bitrate_bits]
+        return _bitrate_by_layer_and_mpeg_version[mpeg_version][layer][bitrate_bits]
     except (KeyError, IndexError):
         raise MpegHeaderException('Bitrate cannot be determined.')
 
+_samplerate_by_mpeg_version = {
+    '1':   (44100, 48000, 32000),
+    '2':   (22050, 24000, 16000),
+    '2.5': (11025, 12000,  8000),
+}
+    
 def _get_header_sample_rate(mpeg_version, bits):
     """Get sample rate by MPEG version and given MPEG Header sample rate bits.
     
@@ -171,16 +181,13 @@ def _get_header_sample_rate(mpeg_version, bits):
     @raise mpegmeta.MpegHeaderException: Raised when sample rate cannot be determined.
     
     """
-    samplerate_by_mpeg_version = {
-        '1':   (44100, 48000, 32000),
-        '2':   (22050, 24000, 16000),
-        '2.5': (11025, 12000,  8000),
-    }
-    
+
     try:
-        return samplerate_by_mpeg_version[mpeg_version][bits]
+        return _samplerate_by_mpeg_version[mpeg_version][bits]
     except (KeyError, TypeError, IndexError):
         raise MpegHeaderException('Sample rate cannot be determined.')
+
+_channel_modes = ("stereo", "joint stereo", "dual channel", "mono")
     
 def _get_header_channel_mode(bits):
     """Get channel mode.
@@ -196,13 +203,20 @@ def _get_header_channel_mode(bits):
         determined.
     """
     
-    channel_modes = ("stereo", "joint stereo", "dual channel", "mono")
     
     try:
-        return channel_modes[bits]
+        return _channel_modes[bits]
     except (IndexError, TypeError):
         raise MpegHeaderException('Channel channel_mode cannot be determined.')
     
+_channel_mode_extension_for_layer_1_and_2 = ("4-31", "8-31", "12-31", "16-31") 
+    
+_channel_mode_extensions_by_layer = {
+    '1': _channel_mode_extension_for_layer_1_and_2,
+    '2': _channel_mode_extension_for_layer_1_and_2,
+    '3': ("", "IS", "MS", "IS+MS")
+}
+
 def _get_header_channel_mode_extension(layer, bits):
     """ 
     Get channel mode extension.
@@ -222,20 +236,14 @@ def _get_header_channel_mode_extension(layer, bits):
         be determined.
         
     """
-    
-    channel_mode_extension_for_layer_1_and_2 = ("4-31", "8-31", "12-31", "16-31") 
-        
-    channel_mode_extensions_by_layer = {
-        '1': channel_mode_extension_for_layer_1_and_2,
-        '2': channel_mode_extension_for_layer_1_and_2,
-        '3': ("", "IS", "MS", "IS+MS")
-    }
-    
+
     try:
-        return channel_mode_extensions_by_layer[layer][bits]
+        return _channel_mode_extensions_by_layer[layer][bits]
     except (KeyError, TypeError, IndexError):
         raise MpegHeaderException('Channel mode extension cannot be determined.')
-   
+    
+_emphases = ("none", "50/15 ms", "reserved", "CCIT J.17")
+
 def _get_header_emphasis(bits):
     """Get emphasis of audio.
     
@@ -249,10 +257,10 @@ def _get_header_emphasis(bits):
     @raise mpegmeta.MpegHeaderException: Raised when emphasis cannot be determined.
     
     """
-    emphases = ("none", "50/15 ms", "reserved", "CCIT J.17")
+    
     
     try:
-        return emphases[bits]
+        return _emphases[bits]
     except (TypeError, IndexError): 
         raise MpegHeaderException('Emphasis cannot be determined.')
 
@@ -284,6 +292,18 @@ def _get_header_bytes(header_offset, chunk):
     # Unpack 4 bytes (the header size)
     (header_bytes, ) = struct.unpack(">I", header)
     return header_bytes
+
+_samplesperframe_by_mpeg_version_and_layer = {
+    '1': {
+        '1': 384, '2': 1152, '3': 1152,
+    },
+    '2': {
+        '1': 384, '2': 1152, '3': 576,
+    },
+    '2.5': {
+        '1': 384, '2': 1152, '3': 576,        
+    },
+}
     
 def _get_samples_per_frame(mpeg_version, layer):
     """Get samples per frame.
@@ -302,24 +322,21 @@ def _get_samples_per_frame(mpeg_version, layer):
     @raise mpegmeta.MpegHeaderException: Raised if samples per frame cannot be determined.
     
     """
-    
-    samplesperframe_by_mpeg_version_and_layer = {
-        '1': {
-            '1': 384, '2': 1152, '3': 1152,
-        },
-        '2': {
-            '1': 384, '2': 1152, '3': 576,
-        },
-        '2.5': {
-            '1': 384, '2': 1152, '3': 576,        
-        },
-    }
+
     
     try:
-        return samplesperframe_by_mpeg_version_and_layer[mpeg_version][layer]
+        return _samplesperframe_by_mpeg_version_and_layer[mpeg_version][layer]
     except (IndexError):
         raise MpegHeaderException('Samples per frame cannot be determined.')
     
+_slots_by_layer = { '1' : 4, '2' : 1, '3' : 1 }
+_coeffs_for_mpeg_version_2_and_2_5 = { '1': 12, '2': 144, '3': 72 }  
+_coeffs_by_mpeg_version_and_layer = {
+    '1': { '1': 12, '2': 144, '3': 144 },
+    '2': _coeffs_for_mpeg_version_2_and_2_5,                                     
+    '2.5': _coeffs_for_mpeg_version_2_and_2_5,                                
+}
+
 def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     """Get size.
     
@@ -346,17 +363,10 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     @raise mpegmeta.MpegHeaderException: Raised when frame size cannot be determined.
     
     """
-    slots_by_layer = { '1' : 4, '2' : 1, '3' : 1 }
-    coeffs_for_mpeg_version_2_and_2_5 = { '1': 12, '2': 144, '3': 72 }  
-    coeffs_by_mpeg_version_and_layer = {
-        '1': { '1': 12, '2': 144, '3': 144 },
-        '2': coeffs_for_mpeg_version_2_and_2_5,                                     
-        '2.5': coeffs_for_mpeg_version_2_and_2_5,                                
-    }
     
     try:
-        coeff = coeffs_by_mpeg_version_and_layer[mpeg_version][layer]
-        slotsize = slots_by_layer[layer]
+        coeff = _coeffs_by_mpeg_version_and_layer[mpeg_version][layer]
+        slotsize = _slots_by_layer[layer]
     except (IndexError, KeyError, TypeError):
         raise MpegHeaderException('Frame size cannot be determined.')
     
