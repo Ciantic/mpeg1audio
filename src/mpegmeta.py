@@ -196,7 +196,7 @@ def _get_header_channel_mode(bits):
         determined.
     """
     
-    channel_modes = ["stereo", "joint stereo", "dual channel", "mono"]
+    channel_modes = ("stereo", "joint stereo", "dual channel", "mono")
     
     try:
         return channel_modes[bits]

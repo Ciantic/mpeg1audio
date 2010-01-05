@@ -41,3 +41,4 @@ if __name__ == '__main__':
     benchmark_parsing([1024, 8192, 10240, 51200, 81920, 102400, 153600, 163840, 204800, 1024000], 
                       number = 60, 
                       parsing_method = 'parse_all')
+    
