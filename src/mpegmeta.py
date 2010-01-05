@@ -28,13 +28,14 @@ Lazy parsing
 ============
 
 Notable feature of mpegmeta is the fact that it L{tries to parse information
-lazily <mpegmeta.MPEG>}. It doesn't parse all frames unless really needed.
+lazily <mpegmeta.MPEG>}. It doesn't parse all frames, or ending unless really 
+needed.
 
 @author: Jari Pennanen
 @copyright: Jari Pennanen, 2009.
 @contact: jari.pennanen@gmail.com
 @license: GNU Lesser General Public License (LGPL). 
-@version: 0.5 Non-published, non-versioned.
+@version: 0.5 Non-published.
 
 """
 
@@ -45,7 +46,13 @@ import math
 import string
 import struct
 
-_DEFAULT_CHUNK_SIZE = 1024
+PARSE_ALL_CHUNK_SIZE = 102400
+"""Chunk size of parsing all frames.
+@type: int"""
+
+DEFAULT_CHUNK_SIZE = 8192
+"""Chunk size for various other tasks.
+@type: int"""
 
 def _check_header_sync_bits(bits):
     """Check if given bits has sync bits.
@@ -452,7 +459,7 @@ def _get_vbr_frame_size(mpeg_size, frame_count):
     """
     return mpeg_size / frame_count
     
-def chunked_reader(file, chunk_size=_DEFAULT_CHUNK_SIZE, start_position=-1, max_chunks=None, reset_offset=True):
+def chunked_reader(file, chunk_size=None, start_position=-1, max_chunks=None, reset_offset=True):
     """Reads file in chunks for performance in handling of big files.
     
     @param file: File to be read, e.g. returned by L{open<open>}.
@@ -477,6 +484,7 @@ def chunked_reader(file, chunk_size=_DEFAULT_CHUNK_SIZE, start_position=-1, max_
         
     offset = file.tell()
     chunk = ""
+    chunk_size = chunk_size or DEFAULT_CHUNK_SIZE 
             
     i = 0
     while True:
@@ -516,6 +524,17 @@ def find_all_overlapping(string, occurrence):
             return
         
         found += 1
+
+def wrap_open_close(function, object, filename, mode = 'rb', file_handle_name = '_file'):
+    file_handle = getattr(object, file_handle_name)
+    if not file_handle.closed:
+        function()
+        return
+    
+    new_file_handle = open(filename, mode)
+    setattr(object, file_handle_name, new_file_handle)
+    function()
+    new_file_handle.close()
         
 def join_iterators(iterable1, iterable2):
     """Joins list and generator.
@@ -724,24 +743,28 @@ class MPEGFrame(MPEGFrameBase):
         @type: int, or None
         """
 
-    def get_forward_iterator(self, file):
+    def get_forward_iterator(self, file, chunk_size = None):
         """Get forward iterator from this position.
         
         @param file: File object
         @type file: file object
         
+        @param chunk_size: Chunked reading size, C{None} defaults to L{DEFAULT_CHUNK_SIZE}.
+        @type chunk_size: int
+        
         @note: First frame of generator is I{next} frame.
         @return: Generator that iterates forward from this frame.
         @rtype: generator of L{MPEGFrame <mpegmeta.MPEGFrame>}
         """
-        next_frame_offset = self.offset+self.size # TODO: Free bitrate.
-        chunks = chunked_reader(file, chunk_size=_DEFAULT_CHUNK_SIZE, start_position=next_frame_offset)
+        # TODO: Free bitrate.
+        next_frame_offset = self.offset + self.size
+        chunks = chunked_reader(file, start_position = next_frame_offset, 
+                                chunk_size = (chunk_size or DEFAULT_CHUNK_SIZE))
         return MPEGFrame.parse_consecutive(next_frame_offset, chunks)
     
-    # TODO: Parse ending of file -  get_backward_iterator
-    
-    def get_backward_iterator(self, file):
-        raise NotImplementedError('Backward iteration not implemented!')        
+#    def get_backward_iterator(self, file):
+#        # TODO: Backward iterator
+#        raise NotImplementedError('Backward iteration not implemented!')        
     
     def _get_data_offset(self):
         """Data offset getter."""
@@ -760,7 +783,7 @@ class MPEGFrame(MPEGFrameBase):
     """
     
     @classmethod
-    def find_and_parse(cls, file, max_frames = 3, chunk_size = _DEFAULT_CHUNK_SIZE, 
+    def find_and_parse(cls, file, max_frames = 3, chunk_size = None, 
                        begin_frame_search = -1, lazily_after = 1,
                        max_chunks = None, max_consecutive_chunks = None):
         """Find and parse from file.
@@ -772,7 +795,7 @@ class MPEGFrame(MPEGFrameBase):
             C{None} means give all frames as lazy generator. 
         @type max_frames: int, or None
         
-        @keyword chunk_size: Size of chunked reading. Defaults to L{_DEFAULT_CHUNK_SIZE}, 
+        @keyword chunk_size: Size of chunked reading. Defaults to L{DEFAULT_CHUNK_SIZE}, 
             minimum C{4}.
         @type chunk_size: int
         
@@ -794,6 +817,9 @@ class MPEGFrame(MPEGFrameBase):
         @type max_consecutive_chunks: int, or None
         
         """
+        
+        chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
+        
         chunk_size = max(chunk_size, 4)
         chunks = chunked_reader(file, chunk_size = chunk_size, 
                                 start_position = begin_frame_search, 
@@ -933,6 +959,7 @@ class MPEGFrameIterator(object):
     """MPEG Frame iterator, for lazy evaluation."""
     def __init__(self, mpeg, begin_frames, end_frames):
         """Create MPEG frame iterator.
+        
         @param mpeg: MPEG Which frames are to be iterated over.
         @type mpeg: L{MPEG<mpegmeta.MPEG>}
         
@@ -951,35 +978,36 @@ class MPEGFrameIterator(object):
         
         self._begin_frames = begin_frames
         """Begin frames.
-        
         @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
         """
         
         self._end_frames = end_frames
         """End frames.
-        
         @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}, or None
         """
         
         self._has_parsed_all = False
-        self._has_parsed_beginning = not callable(self._end_frames)
-        self._has_parsed_ending = not callable(self._begin_frames)
+        """Has parsing all occurred?
+        @type: bool 
+        """
+        
+        self._has_parsed_beginning = not callable(self._begin_frames)
+        """Has parsing beginning occurred?
+        @type: bool 
+        """
+        
+        self._has_parsed_ending = not callable(self._end_frames)
+        """Has parsing end occurred?
+        @type: bool 
+        """
     
     def __len__(self):
         pass
     
-    def parse_all(self, force=False):
+    def parse_all(self, force = False):
         """Parse all frames.
         
-        By parsing all frames, MPEG is ensured to populate following fields 
-        with I{accurate values}:
-        
-            - C{frame_count}
-            - C{bitrate}.
-            
-        @param force: Force re-parsing all frames. Defaults to C{False}.
-        @type force: bool
-        
+        @see: L{MPEG.parse_all}
         """
         if self._has_parsed_all and not force:
             raise NotImplementedError('This should not happen, ever!') # TODO: DEBUG!
@@ -990,21 +1018,27 @@ class MPEGFrameIterator(object):
         for index, frame in enumerate(self):
             avg_bitrate += frame.bitrate
         
-        frame_count = index+1
+        frame_count = index + 1
         bitrate = avg_bitrate / frame_count
         
         # Set MPEG values
         self.mpeg.frame_count = frame_count
         self.mpeg.bitrate =  bitrate
+        
+        # Set has parsed all
         self._has_parsed_all = True
     
 #    def __reversed__(self):
+#        # TODO: Backward iterator
 #        pass
     
     def __iter__(self):
         # Join begin frames, and generator yielding next frames from that on.
+        
+        # TODO: ASSUMPTION: Iterating frames uses parsing all chunk size.
         return join_iterators(self._begin_frames, 
-                              self._begin_frames[-1].get_forward_iterator(self.mpeg._file))
+                              self._begin_frames[-1].get_forward_iterator(self.mpeg._file, 
+                                                                          chunk_size = PARSE_ALL_CHUNK_SIZE))
     
     def __getitem__(self, key):
         # TODO: Following is misleading, _begin_frames and _end_frames does not
@@ -1043,9 +1077,6 @@ class MPEG(MPEGFrameBase):
     
      1. L{is mpeg test <mpegmeta.MPEG._is_mpeg_test>} returned without exception.
      2. L{beginning parsing <mpegmeta.MPEG._parse_beginning>} is done.
-     3. L{ending parsing <mpegmeta.MPEG._parse_ending>} is done.
-     4. Is CBR file, or found L{VBRI <mpegmeta.VBRI>} or L{XING 
-     <mpegmeta.XING>} header for VBR file. 
      
     Normal initialization of MPEG object does these things, user of this class 
     does not need to care about these. All MPEG objects are lazy, when they have
@@ -1067,9 +1098,15 @@ class MPEG(MPEGFrameBase):
      
     That is it! No errors should be raised, no C{None}'s should be given, just
     the meaningful value. If getter needs to parse to get the meaningful value,
-    that is what it does. For the end user of this API this is convinient, it 
-    might not care if the file is VBR, CBR, or what ever. For example if one 
-    cares only about the duration of MPEG: 
+    that is what it does. Currently there are only two major things that the
+    MPEG object does lazily, when really required:
+    
+     - Parse ending of file
+     - Parse all frames
+    
+    For the end user of this API this is convinient, it might not care if the 
+    file is VBR, CBR, or what ever. For example if one cares only about the 
+    duration of MPEG: 
     
     With creating the MPEG instance object I{we ensure} - did not yield parsing 
     exception - that by running C{mpeg.duration} the user gets the duration, 
@@ -1392,7 +1429,7 @@ class MPEG(MPEGFrameBase):
             VBRHeader.set_mpeg(self, self.vbri)
 
                 
-    def _is_mpeg_test(self):
+    def _is_mpeg_test(self, test_position=None):
         """Test that the file is MPEG.
         
         Validates that from middle of the file we can find three valid 
@@ -1410,10 +1447,16 @@ class MPEG(MPEGFrameBase):
         # To get three consecutive headers we need (in bytes):
         #   (Max Frame Size + Header Size) * (Amount of consecutive frames + 1)
         # 
-        # This calculation yields (2881+4)*4 = 11 540, which I decided to round to (2^14 = 16 384) 
+        # This calculation yields (2881+4)*4 = 11 540, which I decided to round to (2^14 = 16 384)
         
         # TODO: Some people use random position in the middle, but why?
-        test_position = int(0.5 * self.filesize) 
+        #
+        # If test position is not given explicitely it is assumed to be at the 
+        # middle start and end of looking. 
+        if test_position is None:
+            looking_length = self.filesize - self._ending_start_looking - self._begin_start_looking
+            test_position = self._begin_start_looking + int(0.5 * looking_length)
+             
         return MPEGFrame.find_and_parse(file = self._file, max_frames = 3, 
                                         chunk_size = 16384, begin_frame_search = test_position, 
                                         lazily_after = 2, max_chunks = 1)
@@ -1460,8 +1503,25 @@ class MPEG(MPEGFrameBase):
             self.frame_size = None
             self.frame_count = None
     
-    def parse_all(self, force=False):
-        """Parse all frames."""
+    def parse_all(self, force = False):
+        """Parse all frames.
+                
+        By parsing all frames, MPEG is ensured to populate following fields 
+        with I{accurate values}:
+        
+            - C{frame_count}
+            - C{bitrate}
+            
+        Essentially all properties, and variables of MPEG should be as accurate
+        as possible after running this.
+            
+        @param force: Force re-parsing all frames. Defaults to C{False}.
+        @type force: bool
+        
+        """
+        # Semantically, I think, only frames should have parse_all() only, thus
+        # this MPEG.parse_all() exists purely because user of this API should
+        # not need to guess the "extra" semantics of frames and MPEG.
         self.frames.parse_all()
     
     def _parse_beginning(self, begin_offset=0, max_frames=6):
@@ -1483,7 +1543,7 @@ class MPEG(MPEGFrameBase):
                                         begin_frame_search = begin_offset)
     
     def _parse_ending(self, end_offset = 0, min_frames = 3, 
-                      rewind_offset = 4000): # TODO: 4000 is "educated guess"...
+                      rewind_offset = 4000):
         """Parse ending of MPEG.
         
         @note: Performance wisely the max_frames argument would be useless, and 
@@ -1616,12 +1676,13 @@ class XING(VBRHeader):
             parsed or found.
         """
         file.seek(first_mpeg_frame)
-        chunk_offset, chunk = file.tell(), file.read(_DEFAULT_CHUNK_SIZE)
+        # TODO: Search for Xing is not needed, it has specific place, but what?
+        chunk_offset, chunk = file.tell(), file.read(1024) 
         beginning_of_xing = string.find(chunk, 'Xing')
         
         # Found the beginning of xing
         if beginning_of_xing != -1:
-            if len(chunk) <= 116:
+            if len(chunk[beginning_of_xing+4:]) <= 116:
                 raise XINGHeaderException('EOF')
             
             # 4 bit flags
