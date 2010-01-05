@@ -1,0 +1,34 @@
+Moving dict tables away from functions.
+
+Before:
+
+Benchmarking parse_all for 60-times:
+Chunk size, Seconds
+      1024  18.509s
+      8192  11.952s
+     10240  11.721s
+     51200  10.989s
+     81920  10.896s
+    102400  10.944s
+    153600  10.853s*
+    163840  10.880s
+    204800  11.105s
+   1024000  11.649s
+Done...
+
+After:
+
+Benchmarking parse_all for 60-times:
+Chunk size, Seconds
+      1024  15.799s
+      8192  9.325s
+     10240  9.102s
+     51200  8.423s
+     81920  8.352s
+    102400  8.358s
+    153600  8.295s
+    163840  8.328s
+    204800  8.341s
+   1024000  9.120s
+Done...
+
