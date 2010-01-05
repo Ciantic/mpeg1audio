@@ -1,0 +1,38 @@
+Mpeg layer number as string:
+Mpeg version number as string:
+
+Before refactor:
+
+Benchmarking parse_all for 60-times:
+Chunk size, Seconds
+      1024  18.509s
+      8192  11.952s
+     10240  11.721s
+     51200  10.989s
+     81920  10.896s
+    102400  10.944s
+    153600  10.853s*
+    163840  10.880s
+    204800  11.105s
+   1024000  11.649s
+Done...
+
+After refactor:
+
+Mpeg layer number as int:
+Mpeg version number as int:
+
+Benchmarking parse_all for 60-times:
+Chunk size, Seconds
+      1024  19.509s
+      8192  12.801s
+     10240  12.623s
+     51200  11.904s
+     81920  11.851s
+    102400  11.847s
+    153600  11.751s*
+    163840  11.753s
+    204800  11.772s
+   1024000  12.579s
+Done...
+
