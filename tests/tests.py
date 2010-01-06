@@ -1,7 +1,7 @@
 """mpegmeta - package tests"""
 
 from datetime import timedelta
-from mpegmeta import MPEG, MpegException, MPEGFrame, chunked_reader, _genlimit
+from mpegmeta import MPEG, MpegException, MPEGFrame, _chunked_reader, _genlimit
 import mpegmeta
 import os
 import unittest
@@ -29,9 +29,18 @@ class MPEGSong3Tests(unittest.TestCase):
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
         
+    def testFramePositions(self):
+        """CBR (3) last frame"""
+        self.assertEqual(self.mpeg.frames[-1].offset, 5927670)
+        self.assertEqual(self.mpeg.frames[-1].size, 627)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
+        
     def testSize(self):
         """CBR (3) size"""
         self.assertEqual(self.mpeg.size, 5925826)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
         
 class MPEGTests(unittest.TestCase):
     """Simple CBR MPEG tests."""
@@ -222,8 +231,8 @@ class ChunkedReadTests(unittest.TestCase):
         
     def testParseConsecutive(self):
         """Chunked parse consecutive"""
-        chunks = chunked_reader(self.file, chunk_size=4)
-        self.assertEqual([2283, 3119, 3955], [f.offset for f in _genlimit(MPEGFrame.parse_consecutive(header_offset=2283, chunks=chunks), 2,3)])
+        chunks = _chunked_reader(self.file, chunk_size=4)
+        self.assertEqual([2283, 3119, 3955], [f.offset for f in _genlimit(MPEGFrame.parse_consecutive(header_offset=2283, chunks=chunks), 2, 3)])
         
     def testFindAndParse(self):
         """Chunked find and parse"""

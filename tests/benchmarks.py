@@ -23,7 +23,7 @@ def benchmark_parsing(chunk_sizes, number, parsing_method):
     print "Benchmarking %s for %s-times:" % (parsing_method, number)
     print "Chunk size, Seconds"
     for size in chunk_sizes:
-        time = Timer("benchmark_chunk_size(%s, '%s')" % (size, parsing_method), 
+        time = Timer("benchmark_chunk_size(%s, '%s')" % (size, parsing_method),
                           "from __main__ import benchmark_chunk_size").timeit(number)
         print "% 10d % 6.3fs" % (size, time) 
     print "Done..."
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 #                      number = 10000, 
 #                      parsing_method = 'parse_ending')
 #
-    benchmark_parsing([1024, 8192, 10240, 51200, 81920, 102400, 153600, 163840, 204800, 1024000], 
-                      number = 60, 
-                      parsing_method = 'parse_all')
+    benchmark_parsing([1024, 8192, 10240, 51200, 81920, 102400, 153600, 163840, 204800, 1024000],
+                      number=60,
+                      parsing_method='parse_all')
     
