@@ -274,8 +274,7 @@ def _get_header_channel_mode(bits):
         raise MpegHeaderException('Channel channel_mode cannot be determined.')
 
 def _get_header_channel_mode_ext(layer, bits):
-    """ 
-    Get channel mode extension.
+    """Get channel mode extension.
     
     @param layer: Layer of the MPEG as returned by 
         L{_get_header_layer<mpegmeta._get_header_layer>}.
@@ -367,8 +366,6 @@ def _get_samples_per_frame(mpeg_version, layer):
         determined.
     
     """
-
-    
     try:
         return _SAMPLES_PER_FRAME[mpeg_version][layer]
     except (IndexError):
@@ -401,7 +398,6 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
         determined.
     
     """
-    
     try:
         coeff = _SLOT_COEFFS[mpeg_version][layer]
         slotsize = _SLOTS[layer]
@@ -447,7 +443,6 @@ def _get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
     @rtype: float
     
     """
-
     bytes_per_sample = float(mpeg_size) / float(sample_count)
     bytes_per_second = bytes_per_sample * float(sample_rate)
     bits_per_second = bytes_per_second * 8
@@ -471,6 +466,14 @@ def _get_sample_count(frame_count, samples_per_frame):
 def _get_duration_from_sample_count(sample_count, sample_rate):
     """Get MPEG Duration.
     @param sample_count: Count of samples.
+    @type sample_count: int
+    
+    @param sample_rate: Sample rate in Hz.
+    @type sample_rate: int
+    
+    @return: Duration of MPEG, with second accuracy.
+    @rtype: datetime.timedelta
+    
     """
     return timedelta(seconds=int(round(sample_count / sample_rate)))
     
@@ -486,7 +489,7 @@ def _get_duration_from_size_bitrate(mpeg_size, bitrate):
     @raise mpegmeta.MpegHeaderException: Raised if duration cannot be 
         determined.
     
-    @return: Duration of the MPEG.
+    @return: Duration of the MPEG, with second accuracy.
     @rtype: datetime.timedelta
     
     """
@@ -535,7 +538,6 @@ def _chunked_reader(file, chunk_size=None, start_position= -1,
     @rtype: generator of (chunk_offset, chunk)
     
     """
-    
     if start_position != -1:
         file.seek(start_position)
         
@@ -604,6 +606,7 @@ def _wrap_open_close(function, object, filename, mode='rb',
     
     @return: New function which being run acts as wrapped function call.
     @rtype: function
+    
     """
     file_handle = getattr(object, file_handle_name)
     
@@ -629,7 +632,6 @@ def _join_iterators(iterable1, iterable2):
     @rtype: generator
     
     """
-    
     for item1 in iterable1:
         yield item1
         
@@ -726,6 +728,7 @@ class MPEGFrameBase(object):
     """MPEG frame base, should not be instated, only inherited.
     
     Variables defined here are constant through out the frames of L{MPEG}.
+    
     """
     def __init__(self):
         self.is_private = False
@@ -795,6 +798,7 @@ class MPEGFrameBase(object):
         
         @see: L{MPEGFrame.data_offset<mpegmeta.MPEGFrame.data_offset>}
         @type: int
+        
         """
         
 class MPEGFrame(MPEGFrameBase):
@@ -814,6 +818,7 @@ class MPEGFrame(MPEGFrameBase):
         @note: In rare X{free bitrate} case the bitrate mentioned in frame is 
             C{0}.
         @type: int
+        
         """
         
         self.samples_per_frame = None
@@ -829,6 +834,7 @@ class MPEGFrame(MPEGFrameBase):
             calculated from I{one frame}, in that case the frame size, and
             bitrate requires second frame measurement.
         @type: int, or None
+        
         """
 
     def get_forward_iterator(self, file, chunk_size=None):
@@ -892,7 +898,6 @@ class MPEGFrame(MPEGFrameBase):
         @type max_consecutive_chunks: int
         
         """
-        
         chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
         
         chunk_size = max(chunk_size, 4)
@@ -1059,7 +1064,6 @@ class MPEGFrameIterator(object):
         @type end_frames: function giving list of L{MPEGFrame}
         
         """
-        
         self.mpeg = mpeg
         """MPEG which frames are iterated.
         @type: L{MPEG<mpegmeta.MPEG>}
@@ -1097,6 +1101,7 @@ class MPEGFrameIterator(object):
         """Parse all frames.
         
         @see: L{MPEG.parse_all}
+        
         """
         # TODO: LOW: How do we deal corrupted MPEG files? 
         # Where some frames are misplaced, etc?
@@ -1215,8 +1220,8 @@ class MPEG(MPEGFrameBase):
     
     @note: This does not provide any kind of updating or playing the mpeg 
     files, only reading out meta data.
-    """
     
+    """
     def __init__(self, file, begin_start_looking=0, ending_start_looking=0,
                  mpeg_test=True):
         """Parses the MPEG file.
@@ -1357,6 +1362,7 @@ class MPEG(MPEGFrameBase):
         """Sample count getter.
         
         @rtype: int, or None
+        
         """      
         frame_count = self._get_frame_count(parse_all=parse_all,
                                             parse_ending=parse_ending)
@@ -1368,6 +1374,7 @@ class MPEG(MPEGFrameBase):
         """Bitrate getter.
         
         @rtype: int, float, or None
+        
         """
         if self._bitrate is not None:
             return self._bitrate
@@ -1388,6 +1395,7 @@ class MPEG(MPEGFrameBase):
         """Frame count getter.
         
         @rtype: int, or None
+        
         """
         if self._frame_count is not None:
             return self._frame_count
@@ -1429,6 +1437,7 @@ class MPEG(MPEGFrameBase):
         """Frame size getter.
         
         @rtype: int, or None
+        
         """
         if self._frame_size is not None:
             return self._frame_size
@@ -1452,6 +1461,7 @@ class MPEG(MPEGFrameBase):
         """Duration getter.
         
         @rtype: datetime.timedelta, or None
+        
         """
         if self._duration is not None:
             return self._duration
@@ -1491,6 +1501,7 @@ class MPEG(MPEGFrameBase):
     @note: May start parsing of beginning frames.
     @note: May start parsing of ending frames.
     @type: int 
+    
     """
     
     sample_count = property(_get_sample_count)
@@ -1498,6 +1509,7 @@ class MPEG(MPEGFrameBase):
     
     @note: May start parsing of all frames. 
     @type: int
+    
     """
     
     frame_size = property(_get_frame_size, _set_frame_size)
@@ -1506,6 +1518,7 @@ class MPEG(MPEGFrameBase):
     For VBR files this is I{average frame size}.
     @note: May start parsing of all frames.
     @type: int 
+    
     """
     
     bitrate = property(_get_bitrate, _set_bitrate)
@@ -1514,6 +1527,7 @@ class MPEG(MPEGFrameBase):
     For VBR files this is I{average bitrate} returned as C{float}.
     @note: May start parsing of all frames.
     @type: int, or float
+    
     """
         
     frame_count = property(_get_frame_count, _set_frame_count)
@@ -1521,6 +1535,7 @@ class MPEG(MPEGFrameBase):
     
     @note: May start parsing of all frames.
     @type: int
+    
     """
     
     duration = property(_get_duration, _set_duration)
@@ -1528,12 +1543,14 @@ class MPEG(MPEGFrameBase):
     
     @note: May start parsing of all frames.
     @type: datetime.timedelta
+    
     """
     
     def _parse_xing(self):
         """Tries to parse and set XING from first mpeg frame.
         @see: L{MPEG.xing<mpegmeta.MPEG.xing>}
         @see: L{XING<mpegmeta.XING>}
+        
         """
         try:
             self.xing = XING.find_and_parse(self._file, self.frames[0].offset)
@@ -1546,6 +1563,7 @@ class MPEG(MPEGFrameBase):
         """Tries to parse and set VBRI from first mpeg frame.
         @see: L{MPEG.vbri<mpegmeta.MPEG.vbri>}
         @see: L{VBRI<mpegmeta.VBRI>}
+        
         """
         # Tries to parse VBRI Header in first mpeg frame.
         try:
@@ -1567,6 +1585,7 @@ class MPEG(MPEGFrameBase):
             
         @return: List of test MPEG frames.
         @rtype: list
+        
         """
         # The absolute theoretical maximum frame size is 2881 bytes: 
         #   MPEG 2.5 Layer II, 8000 Hz @ 160 kbps, with a padding slot.
@@ -1609,7 +1628,6 @@ class MPEG(MPEGFrameBase):
         @type mpegframes: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
         """
-        
         # Copy values of MPEG Frame to MPEG, where applicable.
         self.is_copyrighted = first_mpegframe.is_copyrighted
         self.is_original = first_mpegframe.is_original
@@ -1674,6 +1692,7 @@ class MPEG(MPEGFrameBase):
         
         @raise mpegmeta.MpegHeaderException: Raised if no frames was found. This
             should not happen if L{MPEG._is_mpeg_test} has passed.
+            
         """
         try:
             return _genmin(\
@@ -1689,8 +1708,9 @@ class MPEG(MPEGFrameBase):
         """Parse ending of MPEG.
         
         @note: Performance wisely the max_frames argument would be useless, and 
-        is not implemented. As this method must try recursively find_and_parse
-        further and further from the ending until minimum of frames is met.        
+            is not implemented. As this method must try recursively
+            find_and_parse further and further from the ending until minimum of
+            frames is met.
         
         @keyword end_offset: End offset as relative to I{end of file}, if you
             know the I{size of footers}, give that.
@@ -1750,6 +1770,7 @@ class MpegHeaderException(MpegException):
         
         @keyword bad_offset: Bad offset of the MPEG Frame in file.
         @type bad_offset: int
+        
         """
         super(MpegHeaderException, self).__init__(message)
         
@@ -1762,8 +1783,7 @@ class MpegHeaderException(MpegException):
         @type: int"""
 
 class MpegHeaderEOFException(MpegHeaderException):
-    """MPEG Header cannot be read because EOF (Usually I{End of Chunk}) is 
-        reached."""
+    """MPEG Header End of File (Usually I{End of Chunk}) is reached."""
     pass
 
 
@@ -1779,6 +1799,7 @@ class VBRHeader(object):
         
         @param vbr: VBR from where to set.
         @type vbr: L{VBRHeader}
+        
         """
         if vbr.frame_count is not None:
             mpeg.frame_count = vbr.frame_count
@@ -1818,8 +1839,9 @@ class XING(VBRHeader):
     audio header at a specific position. The whole first frame which contains 
     the XING header is a valid but empty audio frame, so even decoders which 
     don't consider this header can decode the file. The XING header stands after
-    the side information in Layer III files."""
+    the side information in Layer III files.
     
+    """
     def __init__(self):
         super(XING, self).__init__()
     
@@ -1838,6 +1860,7 @@ class XING(VBRHeader):
         
         @raise mpegmeta.XINGHeaderException: Raised if XING Header cannot be 
             parsed or found.
+            
         """
         file.seek(first_mpeg_frame)
         # TODO: LOW: Search for Xing is not needed, it has specific place, but
@@ -1905,7 +1928,6 @@ class VBRI(VBRHeader):
     exactly 32 bytes after the end of the first MPEG audio header in the file.
     
     """
-    
     def __init__(self):
         super(VBRI, self).__init__()
         
@@ -1968,7 +1990,7 @@ class VBRI(VBRHeader):
         raise VBRIHeaderException('VBRI Header not found')
 
 class VBRIException(Exception):
-    "VBRI Exceptions inherit from this."""
+    """VBRI Exceptions inherit from this."""
     pass
 
 class VBRIHeaderException(VBRIException):
