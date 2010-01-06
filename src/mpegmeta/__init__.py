@@ -1136,7 +1136,7 @@ class MPEG(MPEGFrameBase):
         @see: L{XING<mpegmeta.XING>}
         
         """
-        from XING import XING, XINGHeaderException
+        from xing import XING, XINGHeaderException
         try:
             self.xing = XING.find_and_parse(self._file, self.frames[0].offset)
         except XINGHeaderException:
@@ -1150,7 +1150,7 @@ class MPEG(MPEGFrameBase):
         @see: L{VBRI<mpegmeta.VBRI>}
         
         """
-        from VBRI import VBRI, VBRIHeaderException
+        from vbri import VBRI, VBRIHeaderException
         try:
             self.vbri = VBRI.find_and_parse(self._file, self.frames[0].offset)
         except VBRIHeaderException:
