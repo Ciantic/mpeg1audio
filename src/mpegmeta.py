@@ -796,7 +796,6 @@ class MPEGFrameBase(object):
         Notice that this offset points to I{beginning of header's first byte}, 
         and is I{not} offset of beginning of data.
         
-        @see: L{MPEGFrame.data_offset<mpegmeta.MPEGFrame.data_offset>}
         @type: int
         
         """
