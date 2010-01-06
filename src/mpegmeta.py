@@ -907,12 +907,12 @@ class MPEGFrame(MPEGFrameBase):
         for chunk_offset, chunk in chunks:
             for found in _find_all_overlapping(chunk, chr(255)):
                 consecutive_chunks = \
-                    _chunked_reader(file, 
+                    _chunked_reader(file,
                                     chunk_size=chunk_size,
                                     start_position=chunk_offset + found,
                                     max_chunks=max_consecutive_chunks)
                 
-                frames = MPEGFrame.parse_consecutive(chunk_offset + found, 
+                frames = MPEGFrame.parse_consecutive(chunk_offset + found,
                                                      consecutive_chunks) 
                 try:
                     return _genlimit(frames, lazily_after + 1, max_frames)
@@ -1026,9 +1026,9 @@ class MPEGFrame(MPEGFrameBase):
         
         self.version = _get_header_mpeg_version(mpeg_version_bits)
         self.layer = _get_header_layer(layer_bits)
-        self.bitrate = _get_header_bitrate(self.version, self.layer, 
+        self.bitrate = _get_header_bitrate(self.version, self.layer,
                                            bitrate_bits)
-        self.sample_rate = _get_header_sample_rate(self.version, 
+        self.sample_rate = _get_header_sample_rate(self.version,
                                                    samplerate_bits)
         self.channel_mode = _get_header_channel_mode(mode_bits)
         self.channel_mode_extension = \
@@ -1042,7 +1042,7 @@ class MPEGFrame(MPEGFrameBase):
         self.is_protected = protection_bit == 1
         
         # Non-header parseable information
-        self.samples_per_frame = _get_samples_per_frame(self.version, 
+        self.samples_per_frame = _get_samples_per_frame(self.version,
                                                         self.layer)
         self.size = _get_frame_size(self.version, self.layer, self.sample_rate,
                                     self.bitrate, self._padding_size)
@@ -1381,7 +1381,7 @@ class MPEG(MPEGFrameBase):
         if self.is_vbr:
             sample_count = self._get_sample_count(parse_all)
             mpeg_size = self._get_size()
-            self.bitrate = _get_vbr_bitrate(mpeg_size, sample_count, 
+            self.bitrate = _get_vbr_bitrate(mpeg_size, sample_count,
                                             self.sample_rate)
             
         return self._bitrate
@@ -1401,7 +1401,7 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            mpeg_size = self._get_size(parse_all=parse_all, 
+            mpeg_size = self._get_size(parse_all=parse_all,
                                        parse_ending=parse_ending)
             first_frame = self.frames[0]
             unpadded_frame_size = first_frame.size - first_frame._padding_size
@@ -1467,11 +1467,11 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            sample_count = self._get_sample_count(parse_all=False, 
+            sample_count = self._get_sample_count(parse_all=False,
                                                   parse_ending=True)
             if sample_count is not None:
                 self.duration = \
-                    _get_duration_from_sample_count(sample_count, 
+                    _get_duration_from_sample_count(sample_count,
                                                     self.sample_rate)
 #            mpeg_size = self._get_size()
 #            bitrate = self._get_bitrate(parse_all)
@@ -1484,7 +1484,7 @@ class MPEG(MPEGFrameBase):
             sample_count = self._get_sample_count(parse_all)
             if sample_count is not None:
                 self.duration = \
-                    _get_duration_from_sample_count(sample_count, 
+                    _get_duration_from_sample_count(sample_count,
                                                     self.sample_rate)
                 
         return self._duration
@@ -1605,11 +1605,11 @@ class MPEG(MPEGFrameBase):
             test_position = self._begin_start_looking + \
                             int(0.5 * looking_length)
              
-        return MPEGFrame.find_and_parse(file=self._file, 
+        return MPEGFrame.find_and_parse(file=self._file,
                                         max_frames=3,
-                                        chunk_size=16384, 
+                                        chunk_size=16384,
                                         begin_frame_search=test_position,
-                                        lazily_after=2, 
+                                        lazily_after=2,
                                         max_chunks=1)
                 
     def _set_mpeg_details(self, first_mpegframe, mpegframes):
