@@ -1,7 +1,7 @@
 """mpegmeta - package tests"""
 
 from datetime import timedelta
-from mpegmeta import MPEG, MpegException, MPEGFrame, _chunked_reader, _genlimit
+from mpegmeta import MPEG, MPEGFrame, _chunked_reader, _genlimit
 import mpegmeta
 import os
 import unittest

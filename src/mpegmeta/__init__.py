@@ -20,7 +20,7 @@ Simple example:
     >>> import mpegmeta
     >>> try:
     ...     mpeg = mpegmeta.MPEG(open('data/song.mp3', 'rb'))
-    ... except mpegmeta.MpegHeaderException:
+    ... except mpegmeta.MPEGHeaderException:
     ...    pass
     ... else:
     ...     print mpeg.duration
@@ -43,7 +43,7 @@ needed.
 # Pylint disable settings:
 # ------------------------
 # ToDos, DocStrings:
-# pylint: disable-msg=W0511,W0105
+# pylint: disable-msg=W0511,W0105 
  
 # Unused variable, argument:
 # pylint: disable-msg=W0612,W0613
@@ -64,6 +64,13 @@ needed.
 # reStructuredText?
 
 from datetime import timedelta
+from headers import _get_duration_from_sample_count, \
+    _get_duration_from_size_bitrate, _get_frame_size, \
+    _get_header_bitrate, _get_header_bytes, _get_header_channel_mode, \
+    _get_header_channel_mode_ext, _get_header_emphasis, _get_header_layer, \
+    _get_header_mpeg_version, _get_header_sample_rate, _get_sample_count, \
+    _get_samples_per_frame, _get_vbr_bitrate, _get_vbr_frame_size, \
+    _check_header_sync_bits, MPEGHeaderEOFException, MPEGHeaderException
 import math
 import struct
 
@@ -74,342 +81,6 @@ PARSE_ALL_CHUNK_SIZE = 153600
 DEFAULT_CHUNK_SIZE = 8192
 """Chunk size for various other tasks.
 @type: int"""
-
-
-# Value lookup tables, for parsing headers:
-
-_MPEG_VERSIONS = {
-    0 : '2.5',
-    2 : '2',
-    3 : '1',
-}
-    
-_LAYERS = {
-    1 : '3',
-    2 : '2',
-    3 : '1',
-}
-
-_BITRATE__2__2_5 = {
-    '1': (0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256),
-    '2': (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
-    '3': (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
-}
-
-_BITRATE = {
-'1': {
-    '1': (0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
-      '2': (0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
-      '3': (0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
-    },
-'2' : _BITRATE__2__2_5,
-'2.5' : _BITRATE__2__2_5,
-} 
-
-_SAMPLERATE = {
-    '1':   (44100, 48000, 32000),
-    '2':   (22050, 24000, 16000),
-    '2.5': (11025, 12000, 8000),
-}
-
-_CHANNEL_MODES = ("stereo", "joint stereo", "dual channel", "mono")
-    
-_CHANNEL_MODE_EXT_1__2 = ("4-31", "8-31", "12-31", "16-31") 
-    
-_CHANNEL_MODE_EXT = {
-    '1': _CHANNEL_MODE_EXT_1__2,
-    '2': _CHANNEL_MODE_EXT_1__2,
-    '3': ("", "IS", "MS", "IS+MS")
-}
-    
-_EMPHASES = ("none", "50/15 ms", "reserved", "CCIT J.17")
-
-_SAMPLES_PER_FRAME = {
-    '1': {
-        '1': 384, '2': 1152, '3': 1152,
-    },
-    '2': {
-        '1': 384, '2': 1152, '3': 576,
-    },
-    '2.5': {
-        '1': 384, '2': 1152, '3': 576,
-    },
-}
-       
-_SLOTS = { '1' : 4, '2' : 1, '3' : 1 }
-
-_SLOT_COEFFS_2__2_5 = { '1': 12, '2': 144, '3': 72 }
-  
-_SLOT_COEFFS = {
-    '1': { '1': 12, '2': 144, '3': 144 },
-    '2': _SLOT_COEFFS_2__2_5,
-    '2.5': _SLOT_COEFFS_2__2_5,
-}
-
-def _check_header_sync_bits(bits):
-    """Check if given bits has sync bits.
-    
-    @param bits: bits to check for sync bits.
-    @type bits: int
-    
-    @raise mpegmeta.MpegHeaderException: Raised if bits does not contain sync 
-        bits.
-    
-    """
-    if (bits & 2047) != 2047:
-        raise MpegHeaderException('Sync bits does not match.')
-    
-def _get_header_mpeg_version(bits):
-    """Get MPEG version from header bits.
-    
-    @param bits: Two version bits in MPEG header.
-    @type bits: int
-    
-    @return: MPEG Version, one of the following values: C{"2.5", "2", "1"}. 
-    @rtype: string
-    
-    @todo: Ponder about the usefulness of this being string. Same with
-        L{_get_header_layer}.
-    
-    @raise mpegmeta.MpegHeaderException: Raised when layer cannot be determined.
-    
-    """
-    
-    try:
-        return _MPEG_VERSIONS[bits]
-    except (KeyError, IndexError):
-        raise MpegHeaderException('Unknown MPEG version.')
-    
-def _get_header_layer(bits):
-    """Get layer from MPEG Header bits.
-    
-    @param bits: Two layer bits in MPEG header.
-    @type bits: int
-    
-    @return: MPEG Layer, one of the following values: C{'1', '2', '3'}.
-    @rtype: string
-    
-    @raise mpegmeta.MpegHeaderException: Raised when layer cannot be determined.
-    
-    """
-
-    
-    try:
-        return _LAYERS[bits]
-    except (KeyError, IndexError):
-        raise MpegHeaderException('Unknown Layer version')
-    
-def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
-    """ Get bitrate by mpeg version, layer_bitsbitrate_bitstrate bits index.
-    
-    @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version}
-    @type mpeg_version: string
-    
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
-    @type layer: string
-    
-    @param bitrate_bits: Four bits in MPEG header.
-    @type bitrate_bits: int
-    
-    @return: Bitrate in kilobits per second.
-    @rtype: int
-    
-    @raise mpegmeta.MpegHeaderException: Raised when bitrate cannot be
-        determined.
-    
-    """
-    
-    # TODO: LOW: Free bitrate
-    if bitrate_bits == 0:
-        raise MpegHeaderException('Free bitrate is not implemented, sorry.') 
-    
-    try:
-        return _BITRATE[mpeg_version][layer][bitrate_bits]
-    except (KeyError, IndexError):
-        raise MpegHeaderException('Bitrate cannot be determined.')
-
-    
-def _get_header_sample_rate(mpeg_version, bits):
-    """Get sample rate by MPEG version and given MPEG Header sample rate bits.
-    
-    @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version}
-    @type mpeg_version: string
-    
-    @param bits: Sample rate bits in MPEG header.
-    @type bits: int
-    
-    @return: Sample rate in Hz
-    @rtype: int
-    
-    @raise mpegmeta.MpegHeaderException: Raised when sample rate cannot be
-        determined.
-    
-    """
-
-    try:
-        return _SAMPLERATE[mpeg_version][bits]
-    except (KeyError, TypeError, IndexError):
-        raise MpegHeaderException('Sample rate cannot be determined.')
-    
-def _get_header_channel_mode(bits):
-    """Get channel mode.
-    
-    @param bits: Mode bits in MPEG header.
-    @type bits: int
-    
-    @return: Returns one of the following: C{"stereo"}, C{"joint stereo"}, 
-        C{"dual channel"}, C{"mono"}. 
-    @rtype: string
-    
-    @raise mpegmeta.MpegHeaderException: Raised if channel mode cannot be 
-        determined.
-    """
-    
-    
-    try:
-        return _CHANNEL_MODES[bits]
-    except (IndexError, TypeError):
-        raise MpegHeaderException('Channel channel_mode cannot be determined.')
-
-def _get_header_channel_mode_ext(layer, bits):
-    """Get channel mode extension.
-    
-    @param layer: Layer of the MPEG as returned by 
-        L{_get_header_layer<mpegmeta._get_header_layer>}.
-    @type layer: string
-    
-    @param bits: Extension mode bits in MPEG header.
-    @type bits: int
-    
-    @rtype: string 
-    @return: Channel extension mode. One of the following values: C{"4-31", 
-        "8-31", "12-31", "16-31", "", "IS", "MS", "IS+MS"}
-       
-    @raise mpegmeta.MpegHeaderException: Raised if channel mode extension cannot 
-        be determined.
-        
-    """
-
-    try:
-        return _CHANNEL_MODE_EXT[layer][bits]
-    except (KeyError, TypeError, IndexError):
-        raise MpegHeaderException('Channel mode ext. cannot be determined.')
-
-def _get_header_emphasis(bits):
-    """Get emphasis of audio.
-    
-    @param bits: Emphasis bits in MPEG header.
-    @type bits: int
-    
-    @return: Returns emphasis, one of the following: C{"none", "50/15 ms", 
-        "reserved", "CCIT J.17"}
-    @rtype: string 
-    
-    @raise mpegmeta.MpegHeaderException: Raised when emphasis cannot be
-        determined.
-    
-    """
-    
-    
-    try:
-        return _EMPHASES[bits]
-    except (TypeError, IndexError): 
-        raise MpegHeaderException('Emphasis cannot be determined.')
-
-def _get_header_bytes(header_offset, chunk):
-    """Unpacks MPEG Frame header bytes from chunk of data.
-    
-    Value can then be used to parse and verify the bits.
-    
-    @see: L{MPEGFrame.parse<mpegmeta.MPEGFrame.parse>}
-    @see: L{MPEGFrame.find_and_parse<mpegmeta.MPEGFrame.find_and_parse>}
-    
-    @param header_offset: Position I{within a chunk} where to look for header 
-        bytes.
-    @type header_offset: int
-    
-    @param chunk: Chunk of data where to get header bytes.
-    @type chunk: string
-    
-    @return: Header bytes. Used by L{MPEGFrame.parse<mpegmeta.MPEGFrame.parse>}.
-    @rtype: int
-    
-    @raise mpegmeta.MpegHeaderEOFException: Raised when end of chunk was 
-        reached.
-    
-    """
-    # Get first four bytes
-    header = chunk[header_offset:header_offset + 4]
-    if len(header) != 4:
-        raise MpegHeaderEOFException('End of chunk reached, header not found.')
-    
-    # Unpack 4 bytes (the header size)
-    (header_bytes,) = struct.unpack(">I", header)
-    return header_bytes
-
-def _get_samples_per_frame(mpeg_version, layer):
-    """Get samples per frame.
-    
-    @param mpeg_version: Version of the mpeg, as returned by 
-        L{_get_header_mpeg_version}
-    @type mpeg_version: string
-    
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
-    @type layer: string
-    
-    @rtype: int
-    @return: Samples per frame.
-    
-    @raise mpegmeta.MpegHeaderException: Raised if samples per frame cannot be 
-        determined.
-    
-    """
-    try:
-        return _SAMPLES_PER_FRAME[mpeg_version][layer]
-    except (IndexError):
-        raise MpegHeaderException('Samples per frame cannot be determined.')
- 
-
-def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
-    """Get size.
-    
-    @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version}
-    @type mpeg_version: string
-    
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
-    @type layer: string
-    
-    @param sample_rate: Sampling rate in Hz.
-    @type sample_rate: int
-    
-    @param bitrate: Bitrate in kilobits per second.
-    @type bitrate: int
-    
-    @param padding_size: Size of header padding. 1 or 0.
-    @type padding_size: int
-    
-    @return: Frame size in bytes.
-    @rtype: int
-    
-    @raise mpegmeta.MpegHeaderException: Raised when frame size cannot be 
-        determined.
-    
-    """
-    try:
-        coeff = _SLOT_COEFFS[mpeg_version][layer]
-        slotsize = _SLOTS[layer]
-    except (IndexError, KeyError, TypeError):
-        raise MpegHeaderException('Frame size cannot be determined.')
-    
-    bitrate_k = bitrate * 1000
-    
-    framesize = int((coeff * bitrate_k / sample_rate) + padding_size) * slotsize
-    if framesize <= 0:
-        raise MpegHeaderException('Frame size cannot be calculated.')
-    return framesize
 
 def _get_filesize(file):
     """Get file size from file object.
@@ -426,92 +97,6 @@ def _get_filesize(file):
     filesize = file.tell()
     file.seek(offset)
     return filesize
-
-def _get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
-    """Get average bitrate of VBR file.
-    
-    @param mpeg_size: Size of MPEG in bytes.
-    @type mpeg_size: number
-    
-    @param sample_count: Count of samples, greater than C{0}.
-    @type sample_count: number
-
-    @param sample_rate: Sample rate in Hz.
-    @type sample_rate: number
-    
-    @return: Average bitrate in kilobits per second.
-    @rtype: float
-    
-    """
-    bytes_per_sample = float(mpeg_size) / float(sample_count)
-    bytes_per_second = bytes_per_sample * float(sample_rate)
-    bits_per_second = bytes_per_second * 8
-    return bits_per_second / 1000
-
-def _get_sample_count(frame_count, samples_per_frame):
-    """Get sample count.
-    
-    @param frame_count: Count of frames.
-    @type frame_count: int
-    
-    @param samples_per_frame: Samples per frame.
-    @type samples_per_frame: int
-    
-    @return: Sample count
-    @rtype: int
-    
-    """
-    return frame_count * samples_per_frame
-
-def _get_duration_from_sample_count(sample_count, sample_rate):
-    """Get MPEG Duration.
-    @param sample_count: Count of samples.
-    @type sample_count: int
-    
-    @param sample_rate: Sample rate in Hz.
-    @type sample_rate: int
-    
-    @return: Duration of MPEG, with second accuracy.
-    @rtype: datetime.timedelta
-    
-    """
-    return timedelta(seconds=int(round(sample_count / sample_rate)))
-    
-def _get_duration_from_size_bitrate(mpeg_size, bitrate):
-    """Calculate duration from constant bitrate and MPEG Size.
-    
-    @param mpeg_size: MPEG Size in bytes.
-    @type mpeg_size: int
-    
-    @param bitrate: Bitrate in kilobits per second, for example 192.
-    @type bitrate: int
-    
-    @raise mpegmeta.MpegHeaderException: Raised if duration cannot be 
-        determined.
-    
-    @return: Duration of the MPEG, with second accuracy.
-    @rtype: datetime.timedelta
-    
-    """
-    try:
-        return timedelta(seconds=(mpeg_size / (bitrate * 1000) * 8))
-    except ZeroDivisionError:
-        raise MpegHeaderException('Duration cannot be determined.')
-    
-def _get_vbr_frame_size(mpeg_size, frame_count):
-    """Get VBR average frame size.
-    
-    @param mpeg_size: Size of MPEG in bytes.
-    @type mpeg_size: int
-    
-    @param frame_count: Count of frames in MPEG, must be bigger than C{0}.
-    @type frame_count: int
-    
-    @return: Average frame size.
-    @rtype: number
-    
-    """
-    return mpeg_size / frame_count
     
 def _chunked_reader(file, chunk_size=None, start_position= -1,
                     max_chunks= -1, reset_offset=True):
@@ -968,14 +553,14 @@ class MPEGFrame(MPEGFrameBase):
                 # Get header bytes within chunk
                 try:
                     header_bytes = _get_header_bytes(next_header_offset, chunk)
-                except MpegHeaderEOFException:
+                except MPEGHeaderEOFException:
                     # We need next chunk, end of this chunk was reached
                     break
                 
                 # Parse and append if parseable
                 try:
                     next_mpegframe = MPEGFrame.parse(header_bytes)
-                except MpegHeaderException:
+                except MPEGHeaderException:
                     return
                 else:
                     # Frame was parsed successfully
@@ -998,7 +583,7 @@ class MPEGFrame(MPEGFrameBase):
         @rtype: L{MPEGFrame<mpegmeta.MPEGFrame>}
         @return: MPEG Frame
         
-        @raise mpegmeta.MpegHeaderException: Raised if MPEG Frame cannot be 
+        @raise mpegmeta.MPEGHeaderException: Raised if MPEG Frame cannot be 
             parsed.
             
         """
@@ -1256,7 +841,7 @@ class MPEG(MPEGFrameBase):
             possibility that given file is not MPEG, we can rule them out fast. 
         @type mpeg_test: bool
         
-        @raise mpegmeta.MpegHeaderException: Raised if header cannot be found.
+        @raise mpegmeta.MPEGHeaderException: Raised if header cannot be found.
         
         """
         super(MPEG, self).__init__()
@@ -1551,6 +1136,7 @@ class MPEG(MPEGFrameBase):
         @see: L{XING<mpegmeta.XING>}
         
         """
+        from XING import XING, XINGHeaderException
         try:
             self.xing = XING.find_and_parse(self._file, self.frames[0].offset)
         except XINGHeaderException:
@@ -1564,7 +1150,7 @@ class MPEG(MPEGFrameBase):
         @see: L{VBRI<mpegmeta.VBRI>}
         
         """
-        # Tries to parse VBRI Header in first mpeg frame.
+        from VBRI import VBRI, VBRIHeaderException
         try:
             self.vbri = VBRI.find_and_parse(self._file, self.frames[0].offset)
         except VBRIHeaderException:
@@ -1579,7 +1165,7 @@ class MPEG(MPEGFrameBase):
         Validates that from middle of the file we can find three valid 
         consecutive MPEG frames. 
         
-        @raise mpegmeta.MpegHeaderException: Raised if MPEG frames cannot be 
+        @raise mpegmeta.MPEGHeaderException: Raised if MPEG frames cannot be 
             found.
             
         @return: List of test MPEG frames.
@@ -1689,7 +1275,7 @@ class MPEG(MPEGFrameBase):
         @return: List of MPEG frames.
         @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
-        @raise mpegmeta.MpegHeaderException: Raised if no frames was found. This
+        @raise mpegmeta.MPEGHeaderException: Raised if no frames was found. This
             should not happen if L{MPEG._is_mpeg_test} has passed.
             
         """
@@ -1700,7 +1286,7 @@ class MPEG(MPEGFrameBase):
                                               begin_frame_search=begin_offset),
                      1)
         except ValueError:
-            raise MpegHeaderEOFException(
+            raise MPEGHeaderEOFException(
                         "There is not enough frames in this file.")
     
     def _parse_ending(self, end_offset=0, min_frames=3, rewind_offset=4000):
@@ -1726,7 +1312,7 @@ class MPEG(MPEGFrameBase):
         @return: List of MPEG frames, amount of items is variable.
         @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
-        @raise mpegmeta.MpegHeaderEOFException: Raised if whole file does not
+        @raise mpegmeta.MPEGHeaderEOFException: Raised if whole file does not
             include any frames. This should not happen if L{MPEG._is_mpeg_test}
             has passed.
         
@@ -1748,43 +1334,9 @@ class MPEG(MPEGFrameBase):
                             max_frames=None,
                             begin_frame_search=begin_frame_search))
                 if begin_frame_search < 0 and len(end_frames) < min_frames:
-                    raise MpegHeaderException('No frames was found during')
+                    raise MPEGHeaderException('No frames was found during')
             else:
                 return end_frames
-        
-class MpegException(Exception):
-    """MPEG Exception, all MPEG related exceptions inherit from this."""
-    pass
-
-class MpegHeaderException(MpegException):
-    """MPEG Header Exception, unable to parse or read the header."""
-    def __init__(self, message, mpeg_offset=None, bad_offset=None):
-        """MPEG Header Exception.
-        
-        @param message: Message of the exception.
-        @type message: string
-        
-        @keyword mpeg_offset: Offset of the MPEG Frame in file.
-        @type mpeg_offset: int 
-        
-        @keyword bad_offset: Bad offset of the MPEG Frame in file.
-        @type bad_offset: int
-        
-        """
-        super(MpegHeaderException, self).__init__(message)
-        
-        self.mpeg_offset = mpeg_offset
-        """MPEG Offset within file
-        @type: int"""
-        
-        self.bad_offset = bad_offset
-        """Bad offset within file
-        @type: int"""
-
-class MpegHeaderEOFException(MpegHeaderException):
-    """MPEG Header End of File (Usually I{End of Chunk}) is reached."""
-    pass
-
 
 class VBRHeader(object):
     """VBR Header"""
@@ -1827,171 +1379,3 @@ class VBRHeader(object):
         """VBR Quality.
         @type: int, or None 
         """
-        
-        # TODO: TOC!
-
-class XING(VBRHeader):
-    """XING Header.
-    
-    This header is often (but unfortunately not always) added to files which are 
-    encoded with variable bitrate mode. This header stands after the first MPEG 
-    audio header at a specific position. The whole first frame which contains 
-    the XING header is a valid but empty audio frame, so even decoders which 
-    don't consider this header can decode the file. The XING header stands after
-    the side information in Layer III files.
-    
-    """
-    def __init__(self):
-        super(XING, self).__init__()
-    
-    @classmethod
-    def find_and_parse(cls, file, first_mpeg_frame):
-        """Find and parse XING header in MPEG File.
-        
-        @param file: File object.
-        @type file: file object
-        
-        @param first_mpeg_frame: Offset of first mpeg frame in file.
-        @type first_mpeg_frame: int
-        
-        @return: XING Header in given file.
-        @rtype: L{XING<mpegmeta.XING>}
-        
-        @raise mpegmeta.XINGHeaderException: Raised if XING Header cannot be 
-            parsed or found.
-            
-        """
-        file.seek(first_mpeg_frame)
-        # TODO: LOW: Search for Xing is not needed, it has specific place, but
-        # what?
-        chunk_offset, chunk = file.tell(), file.read(1024) 
-        beginning_of_xing = chunk.find('Xing')
-        
-        # Found the beginning of xing
-        if beginning_of_xing != -1:
-            if len(chunk[beginning_of_xing + 4:]) <= 116:
-                raise XINGHeaderException('EOF')
-            
-            # 4 bit flags
-            (flags,) = struct.unpack('>I', chunk[beginning_of_xing + 4:
-                                                 beginning_of_xing + 8])
-            
-            # Cursor
-            cur = beginning_of_xing + 8 # "Xing" + flags = 8
-            
-            # Flags collected
-            has_frame_count = (flags & 1) == 1
-            has_mpeg_size = (flags & 2) == 2
-            has_toc = (flags & 4) == 4
-            has_quality = (flags & 8) == 8
-            
-            self = XING()
-            
-            if has_frame_count:
-                (self.frame_count,) = struct.unpack('>i', chunk[cur:cur + 4])
-                cur += 4
-            
-            if has_mpeg_size:
-                (self.mpeg_size,) = struct.unpack('>i', chunk[cur:cur + 4])
-                cur += 4
-            
-            if has_toc:
-                toc_chunk = chunk[cur:cur + 100] #@UnusedVariable
-                # TODO: TOC!
-                cur += 100
-            
-            if has_quality:
-                (self.quality,) = struct.unpack('>i', chunk[cur:cur + 4])
-                cur += 4
-                
-            self.offset = chunk_offset + beginning_of_xing
-            self.size = cur - beginning_of_xing
-            
-            return self
-                        
-        raise XINGHeaderException('XING Header is not found.')
-
-class XINGException(Exception):
-    """XING Related exceptions inherit from this."""
-    pass
-
-class XINGHeaderException(XINGException):
-    """XING Header Exception."""
-    pass
-
-class VBRI(VBRHeader):
-    """Fraunhofer Encoder VBRI Header.
-    
-    This header is only used by MPEG audio files encoded with the Fraunhofer 
-    Encoder as far as I know. It is different from the XING header. You find it 
-    exactly 32 bytes after the end of the first MPEG audio header in the file.
-    
-    """
-    def __init__(self):
-        super(VBRI, self).__init__()
-        
-        self.delay = 0
-        """Delay.
-        @type: float""" 
-        
-        self.version = None
-        """Version number of VBRI.
-        @type: int"""
-        
-    @classmethod
-    def find_and_parse(cls, file, first_mpeg_frame):
-        """Find and parse VBRI header in MPEG File.
-        
-        @param file: File object.
-        @type file: file object
-        
-        @param first_mpeg_frame: Offset of first mpeg frame in file.
-        @type first_mpeg_frame: int
-        
-        @return: XING Header in given file.
-        @rtype: L{XING<mpegmeta.XING>}
-        
-        @raise mpegmeta.VBRIHeaderException: Raised if VBRI Header cannot be 
-            parsed or found.
-            
-        """
-        file.seek(first_mpeg_frame)
-        chunk_offset, chunk = file.tell(), file.read(1024)
-        
-        beginning_of_vbri = 4 + 32 # Header 4 bytes, VBRI is in 32. byte
-        
-        # If positive match for VBRI
-        if chunk[beginning_of_vbri:beginning_of_vbri + 4] == "VBRI":
-            self = VBRI()
-            self.offset = chunk_offset + beginning_of_vbri
-            self.size = 26
-            
-            if len(chunk) < 24:
-                raise VBRIHeaderException('VBRI EOF')
-            
-            fcur = beginning_of_vbri
-            fcur += 4 # Size of "VBRI"
-            entries_in_toc = 0 #@UnusedVariable
-            scale_factor_of_toc = 0 #@UnusedVariable
-            size_per_table = 0 #@UnusedVariable
-            frames_per_table = 0 #@UnusedVariable
-            
-            (self.version, self.delay, self.quality, self.mpeg_size,
-             self.frame_count, entries_in_toc, #@UnusedVariable
-             scale_factor_of_toc, size_per_table, #@UnusedVariable
-             frames_per_table) = struct.unpack('>HHHIIHHHH', #@UnusedVariable 
-                                               chunk[fcur:fcur + 22])
-             
-            # TODO: TOC!
-            
-            return self 
-        
-        raise VBRIHeaderException('VBRI Header not found')
-
-class VBRIException(Exception):
-    """VBRI Exceptions inherit from this."""
-    pass
-
-class VBRIHeaderException(VBRIException):
-    """VBRI Header exception"""
-    pass
