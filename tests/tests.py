@@ -7,6 +7,32 @@ import os
 import unittest
 import doctest
 
+class MPEGSong2Tests(unittest.TestCase):
+    """Simple CBR song 2 tests."""
+    def setUp(self):
+        self.mpeg = MPEG(file=open('data/song2.mp3', 'rb'))
+        
+    def testFrameCount(self):
+        """CBR (2) frame count"""
+        self.assertEqual(self.mpeg.frame_count, 12471)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
+        
+class MPEGSong3Tests(unittest.TestCase):
+    """Simple CBR song 3 tests."""
+    def setUp(self):
+        self.mpeg = MPEG(file=open('data/song3.mp3', 'rb'))
+        
+    def testFrameCount(self):
+        """CBR (3) frame count"""
+        self.assertEqual(self.mpeg.frame_count, 9452)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
+        
+    def testSize(self):
+        """CBR (3) size"""
+        self.assertEqual(self.mpeg.size, 5925826)
+        
 class MPEGTests(unittest.TestCase):
     """Simple CBR MPEG tests."""
     def setUp(self):
@@ -206,6 +232,8 @@ class ChunkedReadTests(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(MPEGTests))    
+    suite.addTest(unittest.makeSuite(MPEGSong2Tests))    
+    suite.addTest(unittest.makeSuite(MPEGSong3Tests))    
     suite.addTest(unittest.makeSuite(VBRXingTests))
     suite.addTest(unittest.makeSuite(VBRFraunhoferTests))
     suite.addTest(unittest.makeSuite(VBRHeaderlessTests))

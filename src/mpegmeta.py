@@ -1190,14 +1190,7 @@ class MPEG(MPEGFrameBase):
         
         self.frames = None
         """All MPEG frames.
-        
-        @todo: Generator, or class that can handle parsing on the fly.
-        @todo: For CBR we should be able to predict the indexed frame position, 
-            for vbr this should be just generator.
-        @note: This does not contain all frames unless 
-            L{MPEG was created<mpegmeta.MPEG.__init__>} with C{parse_all_frames=True}.
-        @type: iterable of L{MPEGFrames<mpegmeta.MPEGFrame>} 
-        """
+        @type: iterable of L{MPEGFrames<mpegmeta.MPEGFrame>}"""
         
         self._frame_count = None
         self._frame_size = None
@@ -1237,13 +1230,16 @@ class MPEG(MPEGFrameBase):
         if parse_ending: 
             self.size = self.frames[-1].data_offset + self.frames[-1].size - self.frames[0].offset
         else:
-            # TODO: Estimation of size, this might be a good enough for 99% of time,
-            # maybe it should be default? A biggest risk is that files with a *huge*
-            # footer will yield totally inaccurate values, is that risk too big?
+            # TODO: Estimation of size
+            # Following might be a good enough for 99% of time, maybe it should 
+            # be default? A biggest risk is that files with a *huge* footer will 
+            # yield totally inaccurate values, is that risk too big?
             #
-            # Should we choose a higher accuracy over performance with 99% of cases? 
+            # Should we choose a higher accuracy over performance with 99% of 
+            # cases? 
             self.size = self.filesize - self.frames[0].offset
-            
+        
+        # TODO: parse_all in here is redundant, parse_ending gives 100% accurate.
         if parse_all:
             self.frames.parse_all()
             
@@ -1292,22 +1288,25 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            # TODO: Estimation, how do we estimate padded and unpadded?:
+            
             first_frame = self.frames[0]
             unpadded_frame_size = first_frame.size - first_frame._padding_size
-            #unpadded_frames = float(self.size) / float(unpadded_frame_size)
+            unpadded_frames = float(self.size) / float(unpadded_frame_size)
             
             padded_frame_size = unpadded_frame_size + 1
             padded_frames = float(self.size) / float(padded_frame_size)
             
-            # Does this work for other files?
-            self._frame_count = math.ceil(padded_frames)
+            # TODO: Estimation of frame_count:
+            # it seems to be either this:
+            self._frame_count = int(math.ceil(padded_frames))
+            # or this:
+            #self._frame_count = int(unpadded_frames)
+            # now how can we guess which one?
+            
+            print unpadded_frames, padded_frames
             
             # Average it aint:
-            #print unpadded_frames, padded_frames
-            #return int(round((unpadded_frames + padded_frames) / float(2)))
-        
-            #self.frames.parse_all()
+            #self._frame_count = int(round((unpadded_frames + padded_frames) / float(2)))
         else:
             # VBR
             self.frames.parse_all()
