@@ -54,8 +54,8 @@ needed.
 # Protected member access: 
 # pylint: disable-msg=W0212
 
-# Line too long, too many lines per module:
-# pylint: disable-msg=C0302, C0301
+# Line too long C0301, too many lines per module:
+# pylint: disable-msg=C0302
 
 # Too many instance attributes, Too few public methods:
 # pylint: disable-msg=R0902,R0903
@@ -97,13 +97,13 @@ _BITRATE__2__2_5 = {
 }
 
 _BITRATE = {
-    '1': {
-        '1': (0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
-        '2': (0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
-        '3': (0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
+'1': {
+    '1': (0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
+      '2': (0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
+      '3': (0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
     },
-    '2' : _BITRATE__2__2_5,
-    '2.5' : _BITRATE__2__2_5,
+'2' : _BITRATE__2__2_5,
+'2.5' : _BITRATE__2__2_5,
 } 
 
 _SAMPLERATE = {
@@ -152,7 +152,8 @@ def _check_header_sync_bits(bits):
     @param bits: bits to check for sync bits.
     @type bits: int
     
-    @raise mpegmeta.MpegHeaderException: Raised if bits does not contain sync bits.
+    @raise mpegmeta.MpegHeaderException: Raised if bits does not contain sync 
+        bits.
     
     """
     if (bits & 2047) != 2047:
@@ -214,7 +215,8 @@ def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
     @return: Bitrate in kilobits per second.
     @rtype: int
     
-    @raise mpegmeta.MpegHeaderException: Raised when bitrate cannot be determined.
+    @raise mpegmeta.MpegHeaderException: Raised when bitrate cannot be
+        determined.
     
     """
     
@@ -241,7 +243,8 @@ def _get_header_sample_rate(mpeg_version, bits):
     @return: Sample rate in Hz
     @rtype: int
     
-    @raise mpegmeta.MpegHeaderException: Raised when sample rate cannot be determined.
+    @raise mpegmeta.MpegHeaderException: Raised when sample rate cannot be
+        determined.
     
     """
 
@@ -293,7 +296,7 @@ def _get_header_channel_mode_ext(layer, bits):
     try:
         return _CHANNEL_MODE_EXT[layer][bits]
     except (KeyError, TypeError, IndexError):
-        raise MpegHeaderException('Channel mode extension cannot be determined.')
+        raise MpegHeaderException('Channel mode ext. cannot be determined.')
 
 def _get_header_emphasis(bits):
     """Get emphasis of audio.
@@ -360,7 +363,8 @@ def _get_samples_per_frame(mpeg_version, layer):
     @rtype: int
     @return: Samples per frame.
     
-    @raise mpegmeta.MpegHeaderException: Raised if samples per frame cannot be determined.
+    @raise mpegmeta.MpegHeaderException: Raised if samples per frame cannot be 
+        determined.
     
     """
 
@@ -404,7 +408,9 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     except (IndexError, KeyError, TypeError):
         raise MpegHeaderException('Frame size cannot be determined.')
     
-    framesize = int((coeff * (bitrate * 1000) / sample_rate) + padding_size) * slotsize
+    bitrate_k = bitrate * 1000
+    
+    framesize = int((coeff * bitrate_k / sample_rate) + padding_size) * slotsize
     if framesize <= 0:
         raise MpegHeaderException('Frame size cannot be calculated.')
     return framesize
@@ -505,7 +511,7 @@ def _get_vbr_frame_size(mpeg_size, frame_count):
     return mpeg_size / frame_count
     
 def _chunked_reader(file, chunk_size=None, start_position= -1,
-                    max_chunks=-1, reset_offset=True):
+                    max_chunks= -1, reset_offset=True):
     """Reads file in chunks for performance in handling of big files.
     
     @param file: File to be read, e.g. returned by L{open<open>}.
@@ -641,7 +647,7 @@ def _genmin(generator, min):
     
     @raise ValueError: Raised when minimum is not met.
     
-        >>> def yrange(n): # Note that xrange doesn't work, it doesn't have next()
+        >>> def yrange(n): # Note that xrange doesn't work, requires next()
         ...     for i in range(n):
         ...         yield i
         ... 
@@ -848,12 +854,12 @@ class MPEGFrame(MPEGFrameBase):
     
 #    def get_backward_iterator(self, file):
 #        # TODO: LOW: Backward iterator
-#        raise NotImplementedError('Backward iteration not implemented!')        
+#        raise NotImplementedError('Backward iteration not implemented!')
     
     @classmethod
     def find_and_parse(cls, file, max_frames=3, chunk_size=None, #IGNORE:R0913
                        begin_frame_search= -1, lazily_after=1,
-                       max_chunks=-1, max_consecutive_chunks=-1): 
+                       max_chunks= -1, max_consecutive_chunks= -1): 
         """Find and parse from file.
         
         @param file: File object being searched.
@@ -896,11 +902,14 @@ class MPEGFrame(MPEGFrameBase):
 
         for chunk_offset, chunk in chunks:
             for found in _find_all_overlapping(chunk, chr(255)):
-                consecutive_chunks = _chunked_reader(file, chunk_size=chunk_size,
-                                                    start_position=chunk_offset + found,
-                                                    max_chunks=max_consecutive_chunks)
+                consecutive_chunks = \
+                    _chunked_reader(file, 
+                                    chunk_size=chunk_size,
+                                    start_position=chunk_offset + found,
+                                    max_chunks=max_consecutive_chunks)
                 
-                frames = MPEGFrame.parse_consecutive(chunk_offset + found, consecutive_chunks) 
+                frames = MPEGFrame.parse_consecutive(chunk_offset + found, 
+                                                     consecutive_chunks) 
                 try:
                     return _genlimit(frames, lazily_after + 1, max_frames)
                 except ValueError:
@@ -941,11 +950,14 @@ class MPEGFrame(MPEGFrameBase):
             
             # Yield all frames in chunk 
             while True:
-                if (previous_mpegframe is not None) and (previous_mpegframe_offset is not None):
+                if (previous_mpegframe is not None) and \
+                   (previous_mpegframe_offset is not None):
                     if previous_mpegframe.size is None:
                         return
-                        # TODO: LOW: Free bitrate, you must search for the second frame.
-                    next_mpegframe_offset = previous_mpegframe_offset + previous_mpegframe.size
+                        # TODO: LOW: Free bitrate, you must search for the
+                        # second frame.
+                    next_mpegframe_offset = previous_mpegframe_offset + \
+                                            previous_mpegframe.size
                 next_mpegframe = None
                 next_header_offset = next_mpegframe_offset - chunk_offset
                 
@@ -1003,17 +1015,20 @@ class MPEGFrame(MPEGFrameBase):
         mode_bits = (bytes >> 6) & 3  
         mode_extension_bits = (bytes >> 4) & 3  
         copyright_bit = (bytes >> 3) & 1                              
-        original_bit = (bytes >> 2) & 1                                            
+        original_bit = (bytes >> 2) & 1
         emphasis_bits = (bytes >> 0) & 3
 
         self = MPEGFrame()
         
         self.version = _get_header_mpeg_version(mpeg_version_bits)
         self.layer = _get_header_layer(layer_bits)
-        self.bitrate = _get_header_bitrate(self.version, self.layer, bitrate_bits)
-        self.sample_rate = _get_header_sample_rate(self.version, samplerate_bits)
+        self.bitrate = _get_header_bitrate(self.version, self.layer, 
+                                           bitrate_bits)
+        self.sample_rate = _get_header_sample_rate(self.version, 
+                                                   samplerate_bits)
         self.channel_mode = _get_header_channel_mode(mode_bits)
-        self.channel_mode_extension = _get_header_channel_mode_ext(self.layer, mode_extension_bits)
+        self.channel_mode_extension = \
+            _get_header_channel_mode_ext(self.layer, mode_extension_bits)
         self.emphasis = _get_header_emphasis(emphasis_bits)
         
         self._padding_size = padding_bit
@@ -1023,8 +1038,10 @@ class MPEGFrame(MPEGFrameBase):
         self.is_protected = protection_bit == 1
         
         # Non-header parseable information
-        self.samples_per_frame = _get_samples_per_frame(self.version, self.layer)
-        self.size = _get_frame_size(self.version, self.layer, self.sample_rate, self.bitrate, self._padding_size)
+        self.samples_per_frame = _get_samples_per_frame(self.version, 
+                                                        self.layer)
+        self.size = _get_frame_size(self.version, self.layer, self.sample_rate,
+                                    self.bitrate, self._padding_size)
         return self
     
 class MPEGFrameIterator(object):
@@ -1036,10 +1053,10 @@ class MPEGFrameIterator(object):
         @type mpeg: L{MPEG<mpegmeta.MPEG>}
         
         @param begin_frames: First frames of MPEG.
-        @type begin_frames: function giving list of L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @type begin_frames: function giving list of L{MPEGFrame}
          
         @param end_frames: End frames of MPEG. 
-        @type end_frames: function giving list of L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @type end_frames: function giving list of L{MPEGFrame}
         
         """
         
@@ -1085,7 +1102,8 @@ class MPEGFrameIterator(object):
         # Where some frames are misplaced, etc?
         
         if self._has_parsed_all and not force:
-            raise NotImplementedError('This should not happen, ever!') # TODO: DEBUG!
+            # TODO: DEBUG!
+            raise NotImplementedError('This should not happen, ever!')
             # return
         
         avg_bitrate = 0
@@ -1111,13 +1129,15 @@ class MPEGFrameIterator(object):
         # Join begin frames, and generator yielding next frames from that on.
         
         # TODO: ASSUMPTION: Iterating frames uses parsing all chunk size.
-        return _join_iterators(self._begin_frames,
-                               self._begin_frames[-1].get_forward_iterator(self.mpeg._file,
-                                                                           chunk_size=PARSE_ALL_CHUNK_SIZE))
+        return _join_iterators(\
+                 self._begin_frames,
+                 self._begin_frames[-1].\
+                    get_forward_iterator(self.mpeg._file,
+                                         chunk_size=PARSE_ALL_CHUNK_SIZE))
     
     def __getitem__(self, key):
-        # TODO: LOW: Following is misleading, _begin_frames and _end_frames does not
-        #     include all keys, works for now.
+        # TODO: LOW: Following is misleading, _begin_frames and _end_frames does
+        # not include all keys, works for now.
         if key < 0:
             # Lazy evaluate
             if callable(self._end_frames):
@@ -1309,18 +1329,21 @@ class MPEG(MPEGFrameBase):
         if parse_ending: 
             # 100% accurate size, if parsing ending did indeed return frame from
             # same MPEG:
-            self.size = self.frames[-1].offset + self.frames[-1].size - self.frames[0].offset
+            self.size = self.frames[-1].offset + self.frames[-1].size - \
+                        self.frames[0].offset
         else:
-            # TODO: NORMAL: Estimation of size
-            # Following might be a good enough for 99% of time, maybe it should 
-            # be default? A biggest risk is that files with a *huge* footer will 
-            # yield totally inaccurate values, is that risk too big?
+            # TODO: NORMAL: Estimation of size Following might be a good enough
+            # for 99% of time, maybe it should be default? A biggest risk is
+            # that files with a *huge* footer will yield totally inaccurate
+            # values, is that risk too big?
             #
             # Should we choose a higher accuracy over performance with 99% of 
             # cases? 
-            self.size = self.filesize - self._ending_start_looking - self.frames[0].offset
+            self.size = self.filesize - self._ending_start_looking - \
+                        self.frames[0].offset
         
-        # TODO: LOW: parse_all in here is redundant, parse_ending gives 100% accurate.
+        # TODO: LOW: parse_all in here is redundant, parse_ending gives 100%
+        # accurate.
         if parse_all:
             self.frames.parse_all()
             
@@ -1335,7 +1358,8 @@ class MPEG(MPEGFrameBase):
         
         @rtype: int, or None
         """      
-        frame_count = self._get_frame_count(parse_all=parse_all, parse_ending=parse_ending)
+        frame_count = self._get_frame_count(parse_all=parse_all,
+                                            parse_ending=parse_ending)
         if frame_count is not None:  
             return self.frame_count * self.samples_per_frame
         return None
@@ -1351,7 +1375,8 @@ class MPEG(MPEGFrameBase):
         if self.is_vbr:
             sample_count = self._get_sample_count(parse_all)
             mpeg_size = self._get_size()
-            self.bitrate = _get_vbr_bitrate(mpeg_size, sample_count, self.sample_rate)
+            self.bitrate = _get_vbr_bitrate(mpeg_size, sample_count, 
+                                            self.sample_rate)
             
         return self._bitrate
     
@@ -1369,7 +1394,8 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            mpeg_size = self._get_size(parse_all=parse_all, parse_ending=parse_ending)
+            mpeg_size = self._get_size(parse_all=parse_all, 
+                                       parse_ending=parse_ending)
             first_frame = self.frames[0]
             unpadded_frame_size = first_frame.size - first_frame._padding_size
             # unpadded_frames = float(self.size) / float(unpadded_frame_size)
@@ -1387,7 +1413,8 @@ class MPEG(MPEGFrameBase):
             # print unpadded_frames, padded_frames
             
             # Average it aint:
-            #self._frame_count = int(round((unpadded_frames + padded_frames) / float(2)))
+            #self._frame_count = int(round((unpadded_frames + padded_frames) / \
+            #                    float(2)))
         else:
             # VBR
             self.frames.parse_all()
@@ -1431,19 +1458,25 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            sample_count = self._get_sample_count(parse_all=False, parse_ending=True)
+            sample_count = self._get_sample_count(parse_all=False, 
+                                                  parse_ending=True)
             if sample_count is not None:
-                self.duration = _get_duration_from_sample_count(sample_count, self.sample_rate)
+                self.duration = \
+                    _get_duration_from_sample_count(sample_count, 
+                                                    self.sample_rate)
 #            mpeg_size = self._get_size()
 #            bitrate = self._get_bitrate(parse_all)
 #            if (bitrate is not None) and (mpeg_size is not None):
-#                self.duration = _get_duration_from_size_bitrate(mpeg_size=self.size, 
-#                                                  bitrate=self.bitrate)
+#                self.duration = \
+#                    _get_duration_from_size_bitrate(mpeg_size=self.size, 
+#                                                    bitrate=self.bitrate)
         else:
             # VBR
             sample_count = self._get_sample_count(parse_all)
             if sample_count is not None:
-                self.duration = _get_duration_from_sample_count(sample_count, self.sample_rate)
+                self.duration = \
+                    _get_duration_from_sample_count(sample_count, 
+                                                    self.sample_rate)
                 
         return self._duration
     
@@ -1549,12 +1582,17 @@ class MPEG(MPEGFrameBase):
         # If test position is not given explicitely it is assumed to be at the
         # middle start and end of looking.
         if test_position is None:
-            looking_length = self.filesize - self._ending_start_looking - self._begin_start_looking
-            test_position = self._begin_start_looking + int(0.5 * looking_length)
+            looking_length = self.filesize - self._ending_start_looking - \
+                             self._begin_start_looking
+            test_position = self._begin_start_looking + \
+                            int(0.5 * looking_length)
              
-        return MPEGFrame.find_and_parse(file=self._file, max_frames=3,
-                                        chunk_size=16384, begin_frame_search=test_position,
-                                        lazily_after=2, max_chunks=1)
+        return MPEGFrame.find_and_parse(file=self._file, 
+                                        max_frames=3,
+                                        chunk_size=16384, 
+                                        begin_frame_search=test_position,
+                                        lazily_after=2, 
+                                        max_chunks=1)
                 
     def _set_mpeg_details(self, first_mpegframe, mpegframes):
         """Sets details of I{this} MPEG from the given frames.
@@ -1591,7 +1629,8 @@ class MPEG(MPEGFrameBase):
             mpegframes = self.frames[-3:]
         
         # If any of the bitrates differ, this is most likely VBR. 
-        self.is_vbr = any(mpegframe.bitrate != first_mpegframe.bitrate for mpegframe in mpegframes)
+        self.is_vbr = any(mpegframe.bitrate != first_mpegframe.bitrate \
+                          for mpegframe in mpegframes)
         
         if self.is_vbr:
             self.bitrate = None 
@@ -1637,11 +1676,14 @@ class MPEG(MPEGFrameBase):
             should not happen if L{MPEG._is_mpeg_test} has passed.
         """
         try:
-            return _genmin(MPEGFrame.find_and_parse(file=self._file,
-                                                    max_frames=max_frames,
-                                                    begin_frame_search=begin_offset), 1)
+            return _genmin(\
+                     MPEGFrame.find_and_parse(file=self._file,
+                                              max_frames=max_frames,
+                                              begin_frame_search=begin_offset),
+                     1)
         except ValueError:
-            raise MpegHeaderEOFException("There is not enough frames in this file.")
+            raise MpegHeaderEOFException(
+                        "There is not enough frames in this file.")
     
     def _parse_ending(self, end_offset=0, min_frames=3, rewind_offset=4000):
         """Parse ending of MPEG.
@@ -1681,9 +1723,11 @@ class MPEG(MPEGFrameBase):
             if len(end_frames) < min_frames:
                 begin_frame_search -= rewind_offset
                 # Retry from backwards...
-                end_frames = list(MPEGFrame.find_and_parse(file=self._file,
-                                                   max_frames=None,
-                                                   begin_frame_search=begin_frame_search))
+                end_frames = \
+                    list(MPEGFrame.find_and_parse(\
+                            file=self._file,
+                            max_frames=None,
+                            begin_frame_search=begin_frame_search))
                 if begin_frame_search < 0 and len(end_frames) < min_frames:
                     raise MpegHeaderException('No frames was found during')
             else:
@@ -1796,7 +1840,8 @@ class XING(VBRHeader):
             parsed or found.
         """
         file.seek(first_mpeg_frame)
-        # TODO: LOW: Search for Xing is not needed, it has specific place, but what?
+        # TODO: LOW: Search for Xing is not needed, it has specific place, but
+        # what?
         chunk_offset, chunk = file.tell(), file.read(1024) 
         beginning_of_xing = chunk.find('Xing')
         
@@ -1806,7 +1851,8 @@ class XING(VBRHeader):
                 raise XINGHeaderException('EOF')
             
             # 4 bit flags
-            (flags,) = struct.unpack('>I', chunk[beginning_of_xing + 4:beginning_of_xing + 8])
+            (flags,) = struct.unpack('>I', chunk[beginning_of_xing + 4:
+                                                 beginning_of_xing + 8])
             
             # Cursor
             cur = beginning_of_xing + 8 # "Xing" + flags = 8
@@ -1891,7 +1937,7 @@ class VBRI(VBRHeader):
         file.seek(first_mpeg_frame)
         chunk_offset, chunk = file.tell(), file.read(1024)
         
-        beginning_of_vbri = 4 + 32 # Header 4 bytes, VBRI is in 32 offset after that
+        beginning_of_vbri = 4 + 32 # Header 4 bytes, VBRI is in 32. byte
         
         # If positive match for VBRI
         if chunk[beginning_of_vbri:beginning_of_vbri + 4] == "VBRI":
@@ -1910,8 +1956,10 @@ class VBRI(VBRHeader):
             frames_per_table = 0 #@UnusedVariable
             
             (self.version, self.delay, self.quality, self.mpeg_size,
-             self.frame_count, entries_in_toc, scale_factor_of_toc, #@UnusedVariable
-             size_per_table, frames_per_table) = struct.unpack('>HHHIIHHHH', chunk[fcur:fcur + 22]) #@UnusedVariable
+             self.frame_count, entries_in_toc, #@UnusedVariable
+             scale_factor_of_toc, size_per_table, #@UnusedVariable
+             frames_per_table) = struct.unpack('>HHHIIHHHH', #@UnusedVariable 
+                                               chunk[fcur:fcur + 22])
              
             # TODO: TOC!
             
