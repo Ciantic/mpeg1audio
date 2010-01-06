@@ -1,7 +1,7 @@
 """
 Python package which is intended to gather all kinds of MPEG related meta 
 information from file. Such as duration of MPEG file, average bitrate for 
-variable bitrate (VBR) mpeg files, etc.
+variable bitrate (VBR) MPEG files, etc.
 
 Most of the information about MPEG Headers is from excellent article 
 U{MPEG Audio Frame Header By Konrad Windszus, in Code Project
@@ -53,6 +53,9 @@ PARSE_ALL_CHUNK_SIZE = 153600
 DEFAULT_CHUNK_SIZE = 8192
 """Chunk size for various other tasks.
 @type: int"""
+
+
+# Value lookup tables, for parsing headers:
 
 _mpeg_versions = {
     0 : '2.5',
@@ -176,7 +179,7 @@ def _get_header_layer(bits):
 def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
     """ Get bitrate by mpeg version, layer_bitsbitrate_bitstrate bits index.
     
-    @param mpeg_version: Version of the mpeg, as returned by 
+    @param mpeg_version: Version of the MPEG, as returned by 
         L{_get_header_mpeg_version <mpegmeta._get_header_mpeg_version>}
     @type mpeg_version: string
     
@@ -207,14 +210,14 @@ def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
 def _get_header_sample_rate(mpeg_version, bits):
     """Get sample rate by MPEG version and given MPEG Header sample rate bits.
     
-    @param mpeg_version: Version of the mpeg, as returned by 
+    @param mpeg_version: Version of the MPEG, as returned by 
         L{_get_header_mpeg_version,<mpegmeta._get_header_mpeg_version>}
     @type mpeg_version: string
     
-    @param bits: Samplerate bits in MPEG header.
+    @param bits: Sample rate bits in MPEG header.
     @type bits: int
     
-    @return: Samplerate in Hz
+    @return: Sample rate in Hz
     @rtype: int
     
     @raise mpegmeta.MpegHeaderException: Raised when sample rate cannot be determined.
@@ -299,7 +302,8 @@ def _get_header_bytes(header_offset, chunk):
     @see: L{MPEGFrame.parse<mpegmeta.MPEGFrame.parse>}
     @see: L{MPEGFrame.find_and_parse<mpegmeta.MPEGFrame.find_and_parse>}
     
-    @param header_offset: Position I{within a chunk} where to look for header bytes.
+    @param header_offset: Position I{within a chunk} where to look for header 
+        bytes.
     @type header_offset: int
     
     @param chunk: Chunk of data where to get header bytes.
@@ -308,7 +312,8 @@ def _get_header_bytes(header_offset, chunk):
     @return: Header bytes. Used by L{MPEGFrame.parse<mpegmeta.MPEGFrame.parse>}.
     @rtype: int
     
-    @raise mpegmeta.MpegHeaderEOFException: Raised when end of chunk was reached.
+    @raise mpegmeta.MpegHeaderEOFException: Raised when end of chunk was 
+        reached.
     
     """
     # Get first four bytes
@@ -324,11 +329,10 @@ def _get_samples_per_frame(mpeg_version, layer):
     """Get samples per frame.
     
     @param mpeg_version: Version of the mpeg, as returned by 
-        L{_get_header_mpeg_version,<mpegmeta._get_header_mpeg_version>}
+        L{_get_header_mpeg_version}
     @type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by 
-        L{_get_header_layer<mpegmeta._get_header_layer>}.
+    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
     @type layer: string
     
     @rtype: int
@@ -348,12 +352,11 @@ def _get_samples_per_frame(mpeg_version, layer):
 def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     """Get size.
     
-    @param mpeg_version: Version of the mpeg, as returned by 
-        L{_get_header_mpeg_version,<mpegmeta._get_header_mpeg_version>}
+    @param mpeg_version: Version of the MPEG, as returned by 
+        L{_get_header_mpeg_version}
     @type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by 
-        L{_get_header_layer<mpegmeta._get_header_layer>}.
+    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
     @type layer: string
     
     @param sample_rate: Sampling rate in Hz.
@@ -368,7 +371,8 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     @return: Frame size in bytes.
     @rtype: int
     
-    @raise mpegmeta.MpegHeaderException: Raised when frame size cannot be determined.
+    @raise mpegmeta.MpegHeaderException: Raised when frame size cannot be 
+        determined.
     
     """
     
@@ -384,12 +388,12 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     return framesize
 
 def _get_filesize(file):
-    """Get filesize from file object.
+    """Get file size from file object.
     
     @param file: File object, returned e.g. by L{open<open>}.
     @type file: file object
     
-    @return: Filesize in bytes.
+    @return: File size in bytes.
     @rtype: int
     
     """
@@ -411,7 +415,7 @@ def _get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
     @param sample_rate: Sample rate in Hz.
     @type sample_rate: number
     
-    @return: Average bitrate in kbps.
+    @return: Average bitrate in kilobits per second.
     @rtype: float
     
     """
@@ -436,22 +440,23 @@ def _get_sample_count(frame_count, samples_per_frame):
     """
     return frame_count * samples_per_frame
 
-def _get_vbr_duration(sample_count, sample_rate):
-    """Get VBR MPEG Duration.
+def _get_duration_from_sample_count(sample_count, sample_rate):
+    """Get MPEG Duration.
     @param sample_count: Count of samples.
     """
     return timedelta(seconds=int(round(sample_count / sample_rate)))
     
-def _get_cbr_duration(mpeg_size, bitrate):
+def _get_duration_from_size_bitrate(mpeg_size, bitrate):
     """Calculate duration from constant bitrate and MPEG Size.
     
     @param mpeg_size: MPEG Size in bytes.
     @type mpeg_size: int
     
-    @param bitrate: Bitrate in kilobits per second. E.g. 192
+    @param bitrate: Bitrate in kilobits per second, for example 192.
     @type bitrate: int
     
-    @raise mpegmeta.MpegHeaderException: Raised if duration cannot be determined.
+    @raise mpegmeta.MpegHeaderException: Raised if duration cannot be 
+        determined.
     
     @return: Duration of the MPEG.
     @rtype: datetime.timedelta
@@ -545,10 +550,31 @@ def _find_all_overlapping(string, occurrence):
         found += 1
 
 # TODO: Wrap Open and Close.
-def wrap_open_close(function, object, filename, mode='rb',
+def _wrap_open_close(function, object, filename, mode='rb',
                     file_handle_name='_file'):
+    """Wraps the objects file handle for execution of function.
+    
+    @param function: Function to be executed during file handle wrap.
+    @type function: callable
+    
+    @param object: Object having the file handle.
+    @type object: object
+    
+    @param filename: Filename opened.
+    @type filename: string
+    
+    @keyword mode: Opening mode.
+    @type mode: string
+    
+    @keyword file_handle_name: Name of the instance variable in object.
+    @type file_handle_name: string
+    
+    @return: New function which being run acts as wrapped function call.
+    @rtype: function
+    """
     file_handle = getattr(object, file_handle_name)
-    if not file_handle.closed:
+    
+    if (file_handle is not None) and (not file_handle.closed):
         function()
         return
     
@@ -1031,6 +1057,9 @@ class MPEGFrameIterator(object):
         
         @see: L{MPEG.parse_all}
         """
+        # TODO: How do we deal corrupted MPEG files? 
+        # Where some frames are misplaced, etc?
+        
         if self._has_parsed_all and not force:
             raise NotImplementedError('This should not happen, ever!') # TODO: DEBUG!
             return
@@ -1059,8 +1088,8 @@ class MPEGFrameIterator(object):
         
         # TODO: ASSUMPTION: Iterating frames uses parsing all chunk size.
         return _join_iterators(self._begin_frames,
-                              self._begin_frames[-1].get_forward_iterator(self.mpeg._file,
-                                                                          chunk_size=PARSE_ALL_CHUNK_SIZE))
+                               self._begin_frames[-1].get_forward_iterator(self.mpeg._file,
+                                                                           chunk_size=PARSE_ALL_CHUNK_SIZE))
     
     def __getitem__(self, key):
         # TODO: Following is misleading, _begin_frames and _end_frames does not
@@ -1156,22 +1185,26 @@ class MPEG(MPEGFrameBase):
         @type file: file
         
         @param begin_start_looking: Start position of MPEG header search. For
-            example if you know that file has ID3v2, it is wise and adviced
-            to give the size of ID3v2 tag to this field.
+            example if you know that file has ID3v2, it is adviced to give the 
+            size of ID3v2 tag to this field.
             
-            Value B{must be accurate}.
+            Value I{must be equal or lesser than} (<=) the beginning of MPEG. If
+            the given value exceeds the first header, the given MPEG might be
+            incorrect.
         @type begin_start_looking: int
         
         @param ending_start_looking: End position of MPEG I{relative to end of 
-            file}. For example if you know that file has ID3v1, give C{128}, the 
-            size of ID3v1, this ensures that we can I{at least} skip over that.
+            file}. For example if you know that file has ID3v1 footer, give 
+            C{128}, the size of ID3v1, this ensures that we can I{at least} skip
+            over that.
             
-            This value B{does not have to be accurate}, estimation is good enough.
+            Value I{must be equal or lesser than} (<=) end of the last 
+            MPEG header.
             
         @type ending_start_looking: int
         
         @param mpeg_test: Do mpeg test first before continuing with parsing the 
-            beginning. This is usefull especially if there is even slight 
+            beginning. This is useful especially if there is even slight 
             possibility that given file is not MPEG, we can rule them out fast. 
         @type mpeg_test: bool
         
@@ -1215,12 +1248,15 @@ class MPEG(MPEGFrameBase):
         if mpeg_test:
             test_frames = list(self._is_mpeg_test())
         
-        # Parse beginning of file
+        # Parse beginning of file, when needed. In reality, this is run every 
+        # time init is run. The _set_mpeg_details, XING, VBRI uses the first 
+        # frames so we cannot make this very lazy. 
         begin_frames = lambda: self._parse_beginning(begin_start_looking)
         
         # Parse ending of file, when needed.
         end_frames = lambda: self._parse_ending(ending_start_looking)
         
+        # Creates frame iterator between begin and end frames.
         self.frames = MPEGFrameIterator(self, begin_frames, end_frames)
         
         # Set MPEG Details
@@ -1240,6 +1276,8 @@ class MPEG(MPEGFrameBase):
             return self._size
         
         if parse_ending: 
+            # 100% accurate size, if parsing ending did indeed return frame from
+            # same MPEG:
             self.size = self.frames[-1].offset + self.frames[-1].size - self.frames[0].offset
         else:
             # TODO: Estimation of size
@@ -1249,7 +1287,7 @@ class MPEG(MPEGFrameBase):
             #
             # Should we choose a higher accuracy over performance with 99% of 
             # cases? 
-            self.size = self.filesize - self.frames[0].offset
+            self.size = self.filesize - self._ending_start_looking - self.frames[0].offset
         
         # TODO: parse_all in here is redundant, parse_ending gives 100% accurate.
         if parse_all:
@@ -1362,15 +1400,19 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            mpeg_size = self._get_size()
-            bitrate = self._get_bitrate(parse_all)
-            if (bitrate is not None) and (mpeg_size is not None):
-                self.duration = _get_cbr_duration(mpeg_size=self.size, bitrate=self.bitrate)
+            sample_count = self._get_sample_count(parse_all=False, parse_ending=True)
+            if sample_count is not None:
+                self.duration = _get_duration_from_sample_count(sample_count, self.sample_rate)
+#            mpeg_size = self._get_size()
+#            bitrate = self._get_bitrate(parse_all)
+#            if (bitrate is not None) and (mpeg_size is not None):
+#                self.duration = _get_duration_from_size_bitrate(mpeg_size=self.size, 
+#                                                  bitrate=self.bitrate)
         else:
             # VBR
             sample_count = self._get_sample_count(parse_all)
             if sample_count is not None:
-                self.duration = _get_vbr_duration(sample_count, self.sample_rate)
+                self.duration = _get_duration_from_sample_count(sample_count, self.sample_rate)
                 
         return self._duration
     
@@ -1758,6 +1800,7 @@ class VBRI(VBRHeader):
     This header is only used by MPEG audio files encoded with the Fraunhofer 
     Encoder as far as I know. It is different from the XING header. You find it 
     exactly 32 bytes after the end of the first MPEG audio header in the file.
+    
     """
     
     def __init__(self):
@@ -1786,6 +1829,7 @@ class VBRI(VBRHeader):
         
         @raise mpegmeta.VBRIHeaderException: Raised if VBRI Header cannot be 
             parsed or found.
+            
         """
         file.seek(first_mpeg_frame)
         chunk_offset, chunk = file.tell(), file.read(1024)
