@@ -28,7 +28,7 @@ Lazy parsing
 ============
 
 Notable feature of mpegmeta is the fact that it L{tries to parse information
-lazily <mpegmeta.MPEG>}. It doesn't parse all frames, or ending unless really 
+lazily <mpegmeta.MPEG>}. It doesn't parse all frames, or ending unless really
 needed.
 
 @author: Jari Pennanen
@@ -42,6 +42,7 @@ needed.
 # TODO: LOW: I don't like the verboseness of EpyDoc syntax, maybe change to reStructuredText?
 
 from datetime import timedelta
+from test.test_iterlen import len
 import math
 import string
 import struct
@@ -146,8 +147,9 @@ def _get_header_mpeg_version(bits):
     @return: MPEG Version, one of the following values: C{"2.5", "2", "1"}. 
     @rtype: string
     
-    @todo: Ponder about the usefulness of this being string. Same with 
-        L{_get_header_layer<mpegmeta._get_header_layer>}.
+    @todo: Ponder about the usefulness of this being string. Same with
+        L{_get_header_layer}.
+    
     @raise mpegmeta.MpegHeaderException: Raised when layer cannot be determined.
     
     """
@@ -180,11 +182,10 @@ def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
     """ Get bitrate by mpeg version, layer_bitsbitrate_bitstrate bits index.
     
     @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version <mpegmeta._get_header_mpeg_version>}
+        L{_get_header_mpeg_version}
     @type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer 
-        <mpegmeta._get_header_layer>}.
+    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
     @type layer: string
     
     @param bitrate_bits: Four bits in MPEG header.
@@ -211,7 +212,7 @@ def _get_header_sample_rate(mpeg_version, bits):
     """Get sample rate by MPEG version and given MPEG Header sample rate bits.
     
     @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version,<mpegmeta._get_header_mpeg_version>}
+        L{_get_header_mpeg_version}
     @type mpeg_version: string
     
     @param bits: Sample rate bits in MPEG header.
@@ -235,8 +236,8 @@ def _get_header_channel_mode(bits):
     @param bits: Mode bits in MPEG header.
     @type bits: int
     
-    @return: Returns one of the following: C{"stereo", "joint stereo", 
-        "dual channel", "mono"}. 
+    @return: Returns one of the following: C{"stereo"}, C{"joint stereo"}, 
+        C{"dual channel"}, C{"mono"}. 
     @rtype: string
     
     @raise mpegmeta.MpegHeaderException: Raised if channel mode cannot be 
@@ -277,14 +278,15 @@ def _get_header_channel_mode_extension(layer, bits):
 def _get_header_emphasis(bits):
     """Get emphasis of audio.
     
-    @type bits: int
     @param bits: Emphasis bits in MPEG header.
+    @type bits: int
     
-    @rtype: string
     @return: Returns emphasis, one of the following: C{"none", "50/15 ms", 
-        "reserved", "CCIT J.17"} 
+        "reserved", "CCIT J.17"}
+    @rtype: string 
     
-    @raise mpegmeta.MpegHeaderException: Raised when emphasis cannot be determined.
+    @raise mpegmeta.MpegHeaderException: Raised when emphasis cannot be
+        determined.
     
     """
     
@@ -483,7 +485,7 @@ def _get_vbr_frame_size(mpeg_size, frame_count):
     return mpeg_size / frame_count
     
 def _chunked_reader(file, chunk_size=None, start_position= -1,
-                    max_chunks=None, reset_offset=True):
+                    max_chunks=-1, reset_offset=True):
     """Reads file in chunks for performance in handling of big files.
     
     @param file: File to be read, e.g. returned by L{open<open>}.
@@ -495,8 +497,13 @@ def _chunked_reader(file, chunk_size=None, start_position= -1,
     @keyword start_position: Start position of the chunked reading.
     @type start_position: int
     
-    @keyword max_chunks: Maximum amount of chunks.
+    @keyword max_chunks: Maximum amount of chunks, C{-1} means I{infinity}.
     @type max_chunks: int
+    
+    @keyword reset_offset: Resets the offset of seeking between chunks. Used
+        to correct the cursor position when file seeks / reads occurs inside 
+        chunk iteration.
+    @type reset_offset: bool
     
     @return: Generator of file chunks as tuples of chunk offset and chunk.
     @rtype: generator of (chunk_offset, chunk)
@@ -512,7 +519,7 @@ def _chunked_reader(file, chunk_size=None, start_position= -1,
             
     i = 0
     while True:
-        if (max_chunks is not None) and (max_chunks <= i):
+        if 0 < max_chunks <= i:
             break
         
         if reset_offset:
@@ -692,7 +699,10 @@ def _genlimit(generator, min, max):
     return g
         
 class MPEGFrameBase(object):
-    """MPEG frame base."""
+    """MPEG frame base.
+    
+    Variables defined here are constant through out the frames of L{MPEG}.
+    """
     def __init__(self):
         self.is_private = False
         """Is private?
@@ -767,12 +777,13 @@ class MPEGFrame(MPEGFrameBase):
         self.bitrate = None
         """Bitrate in kilobits, for example 192.
         
-        In the MPEG audio standard there is a X{free bitrate} format described. This free 
-        format means that the file is encoded with a constant bitrate, which is 
-        not one of the predefined bitrates. Only very few decoders can handle 
-        those files.
+        In the MPEG audio standard there is a X{free bitrate} format described.
+        This free format means that the file is encoded with a constant bitrate,
+        which is not one of the predefined bitrates. Only very few decoders can
+        handle those files.
         
-        @note: In rare X{free bitrate} case the bitrate mentioned in frame is C{0}.
+        @note: In rare X{free bitrate} case the bitrate mentioned in frame is 
+            C{0}.
         @type: int
         """
         
@@ -786,7 +797,7 @@ class MPEGFrame(MPEGFrameBase):
         
         @note: Includes the header (4) bytes.
         @note: Bitrate may be C{0}, thus frame size is C{None} and cannot be 
-            calculated from I{one frame}, in that case the frame size, and 
+            calculated from I{one frame}, in that case the frame size, and
             bitrate requires second frame measurement.
         @type: int, or None
         """
@@ -797,12 +808,14 @@ class MPEGFrame(MPEGFrameBase):
         @param file: File object
         @type file: file object
         
-        @param chunk_size: Chunked reading size, C{None} defaults to L{DEFAULT_CHUNK_SIZE}.
+        @param chunk_size: Chunked reading size, C{None} defaults to 
+            L{DEFAULT_CHUNK_SIZE}.
         @type chunk_size: int
         
         @note: First frame of generator is I{next} frame.
         @return: Generator that iterates forward from this frame.
         @rtype: generator of L{MPEGFrame <mpegmeta.MPEGFrame>}
+        
         """
         # TODO: Free bitrate.
         next_frame_offset = self.offset + self.size
@@ -822,8 +835,8 @@ class MPEGFrame(MPEGFrameBase):
     """Offset of MPEG Frame data in file.
     
     @note: Iteration of frames is not optimized to gather data of the
-    MPEG. If you intend to get also the data, you must re-write parts of
-    frame iteration because of performance reasons.
+        MPEG. If you intend to get also the data, you must re-write parts of
+        frame iteration because of performance reasons.
     
     @see: L{MPEGFrame.size<mpegmeta.MPEGFrame.size>}
     @type: int
@@ -833,7 +846,7 @@ class MPEGFrame(MPEGFrameBase):
     @classmethod
     def find_and_parse(cls, file, max_frames=3, chunk_size=None,
                        begin_frame_search= -1, lazily_after=1,
-                       max_chunks=None, max_consecutive_chunks=None):
+                       max_chunks=-1, max_consecutive_chunks=-1):
         """Find and parse from file.
         
         @param file: File object being searched.
@@ -856,13 +869,13 @@ class MPEGFrame(MPEGFrameBase):
         @type lazily_after: int
         
         @keyword max_chunks: Maximum amount of chunks the chunked reader can yield.
-            C{None} means that there is no maximum, goes to end of file if neccessary.
-        @type max_chunks: int, or None
+            C{-1} means infinity, and can be looped to end of file.
+        @type max_chunks: int
         
         @keyword max_consecutive_chunks: Maximum of I{consecutive} chunks in 
-            returned lazy generator. C{None} means that there is no maximum, 
-            goes to end of file if neccessary. Defaults to C{None}. 
-        @type max_consecutive_chunks: int, or None
+            returned lazy generator. C{-1} means infinity, and can be looped to
+            end of file.
+        @type max_consecutive_chunks: int
         
         """
         
@@ -1353,7 +1366,7 @@ class MPEG(MPEGFrameBase):
             #self._frame_count = int(unpadded_frames)
             # now how can we guess which one?
             
-            print unpadded_frames, padded_frames
+            # print unpadded_frames, padded_frames
             
             # Average it aint:
             #self._frame_count = int(round((unpadded_frames + padded_frames) / float(2)))
@@ -1510,12 +1523,13 @@ class MPEG(MPEGFrameBase):
         # To get three consecutive headers we need (in bytes):
         #   (Max Frame Size + Header Size) * (Amount of consecutive frames + 1)
         # 
-        # This calculation yields (2881+4)*4 = 11 540, which I decided to round to (2^14 = 16 384)
+        # This calculation yields (2881+4)*4 = 11 540, which I decided to round
+        # to (2^14 = 16 384)
         
         # TODO: Some people use random position in the middle, but why?
         #
-        # If test position is not given explicitely it is assumed to be at the 
-        # middle start and end of looking. 
+        # If test position is not given explicitely it is assumed to be at the
+        # middle start and end of looking.
         if test_position is None:
             looking_length = self.filesize - self._ending_start_looking - self._begin_start_looking
             test_position = self._begin_start_looking + int(0.5 * looking_length)
@@ -1585,7 +1599,7 @@ class MPEG(MPEGFrameBase):
         # Semantically, I think, only frames should have parse_all() only, thus
         # this MPEG.parse_all() exists purely because user of this API should
         # not need to guess the "extra" semantics of frames and MPEG.
-        self.frames.parse_all()
+        self.frames.parse_all(force=force)
     
     def _parse_beginning(self, begin_offset=0, max_frames=6):
         """Parse beginning of MPEG.
@@ -1594,19 +1608,24 @@ class MPEG(MPEGFrameBase):
         @type begin_offset: int
         
         @keyword max_frames: Maximum of frames to be parsed, and returned 
-            forward from first found frame.
+            forward from first found frame. C{-1} means I{infinity}, and can be 
+            looped to end of file.
         @type max_frames: int
         
         @return: List of MPEG frames.
         @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
+        @raise mpegmeta.MpegHeaderException: Raised if no frames was found. This
+            should not happen if L{MPEG._is_mpeg_test} has passed.
         """
-        return MPEGFrame.find_and_parse(file=self._file,
-                                        max_frames=max_frames,
-                                        begin_frame_search=begin_offset)
+        try:
+            return _genmin(MPEGFrame.find_and_parse(file=self._file,
+                                                    max_frames=max_frames,
+                                                    begin_frame_search=begin_offset), 1)
+        except ValueError:
+            raise MpegHeaderEOFException("There is not enough frames in this file.")
     
-    def _parse_ending(self, end_offset=0, min_frames=3,
-                      rewind_offset=4000):
+    def _parse_ending(self, end_offset=0, min_frames=3, rewind_offset=4000):
         """Parse ending of MPEG.
         
         @note: Performance wisely the max_frames argument would be useless, and 
@@ -1620,12 +1639,17 @@ class MPEG(MPEGFrameBase):
         @keyword min_frames: Minimum amount of frames from the end of file.
         @type min_frames: int
         
-        @keyword rewind_offset: When minimum is not met, backdown the offset
+        @keyword rewind_offset: When minimum is not met, rewind the offset
             this much and retry. Defaults to C{4000}.
         @type rewind_offset: int
         
+        @note: This might take a long time for files that does not have frames.
         @return: List of MPEG frames, amount of items is variable.
         @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
+        
+        @raise mpegmeta.MpegHeaderEOFException: Raised if whole file does not
+            include any frames. This should not happen if L{MPEG._is_mpeg_test}
+            has passed.
         
         """
         # min_frames is always positive:
@@ -1638,11 +1662,12 @@ class MPEG(MPEGFrameBase):
             # Oh noes, not enough frames.
             if len(end_frames) < min_frames:
                 begin_frame_search -= rewind_offset
-                
                 # Retry from backwards...
                 end_frames = list(MPEGFrame.find_and_parse(file=self._file,
                                                    max_frames=None,
                                                    begin_frame_search=begin_frame_search))
+                if begin_frame_search < 0 and len(end_frames) < min_frames:
+                    raise MpegHeaderException('No frames was found during')
             else:
                 return end_frames
         
