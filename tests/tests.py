@@ -98,6 +98,15 @@ class MPEGTests(unittest.TestCase):
         self.assertEqual(self.mpeg.is_vbr, False)
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
+    
+    def testParsingAll(self):
+        """CBR parse all"""
+        self.mpeg.parse_all()
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frame_count, 7352)
+        self.assertEqual(self.mpeg.sample_count, 8467823)
+        self.assertEqual(self.mpeg.duration.seconds, 192)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
 class VBRXingTests(unittest.TestCase):
     """VBR Xing header tests."""
@@ -225,6 +234,25 @@ class VBRHeaderlessTests(unittest.TestCase):
         self.assertEqual(self.mpeg.frames._has_parsed_all, True)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
+#class MPEGSong4Tests(unittest.TestCase):
+#    """CBR (4) tests."""
+#    def setUp(self):
+#        self.mpeg = MPEG(file=open('data/song4.mp3', 'rb'))
+#        
+#    def testDuration(self):
+#        """CBR (4) duration"""
+#        self.assertEqual(self.mpeg.duration, timedelta(seconds=200))
+#        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+#        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
+#        
+#    def testParsingAll(self):
+#        """CBR (4) parse all"""
+#        self.mpeg.parse_all() 
+#        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+#        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
+#        self.assertEqual(self.mpeg.duration, timedelta(seconds=200))
+#        self.assertEqual(self.mpeg.sample_count, 8843375)
+        
 class ChunkedReadTests(unittest.TestCase):
     def setUp(self):
         self.file = open('data/song.mp3', 'rb')
@@ -246,6 +274,7 @@ if __name__ == "__main__":
     suite.addTest(unittest.makeSuite(VBRXingTests))
     suite.addTest(unittest.makeSuite(VBRFraunhoferTests))
     suite.addTest(unittest.makeSuite(VBRHeaderlessTests))
+    suite.addTest(unittest.makeSuite(VBRHeaderless2Tests))
     suite.addTest(unittest.makeSuite(ChunkedReadTests))
     unittest.TextTestRunner(verbosity=2).run(suite)
     
