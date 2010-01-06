@@ -30,14 +30,14 @@ def benchmark_parsing(chunk_sizes, number, parsing_method):
     print ""
     
 if __name__ == '__main__':
-#    benchmark_parsing([1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 9216, 10240, 51200, 102400], 
-#                      number = 5000, 
-#                      parsing_method = '')
-#
-#    benchmark_parsing([1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 9216, 10240, 51200, 102400], 
-#                      number = 10000, 
-#                      parsing_method = 'parse_ending')
-#
+    benchmark_parsing([1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 9216, 10240, 51200, 102400], 
+                      number = 5000, 
+                      parsing_method = '')
+
+    benchmark_parsing([1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 9216, 10240, 51200, 102400], 
+                      number = 10000, 
+                      parsing_method = 'parse_ending')
+
     benchmark_parsing([1024, 8192, 10240, 51200, 81920, 102400, 153600, 163840, 204800, 1024000],
                       number=60,
                       parsing_method='parse_all')

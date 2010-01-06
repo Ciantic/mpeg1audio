@@ -850,22 +850,6 @@ class MPEGFrame(MPEGFrameBase):
 #        # TODO: LOW: Backward iterator
 #        raise NotImplementedError('Backward iteration not implemented!')        
     
-    def _get_data_offset(self):
-        """Data offset getter."""
-        return self.offset + 4 # 32 bits.
-    
-    data_offset = property(_get_data_offset)
-    """Offset of MPEG Frame data in file.
-    
-    @note: Iteration of frames is not optimized to gather data of the
-        MPEG. If you intend to get also the data, you must re-write parts of
-        frame iteration because of performance reasons.
-    
-    @see: L{MPEGFrame.size<mpegmeta.MPEGFrame.size>}
-    @type: int
-    
-    """
-    
     @classmethod
     def find_and_parse(cls, file, max_frames=3, chunk_size=None, #IGNORE:R0913
                        begin_frame_search= -1, lazily_after=1,
@@ -1351,7 +1335,7 @@ class MPEG(MPEGFrameBase):
         
         @rtype: int, or None
         """      
-        frame_count = self._get_frame_count()
+        frame_count = self._get_frame_count(parse_all=parse_all, parse_ending=parse_ending)
         if frame_count is not None:  
             return self.frame_count * self.samples_per_frame
         return None
@@ -1375,7 +1359,7 @@ class MPEG(MPEGFrameBase):
         """Bitrate setter."""
         self._bitrate = value
     
-    def _get_frame_count(self):
+    def _get_frame_count(self, parse_all=False, parse_ending=True):
         """Frame count getter.
         
         @rtype: int, or None
@@ -1385,13 +1369,13 @@ class MPEG(MPEGFrameBase):
         
         if not self.is_vbr:
             # CBR
-            
+            mpeg_size = self._get_size(parse_all=parse_all, parse_ending=parse_ending)
             first_frame = self.frames[0]
             unpadded_frame_size = first_frame.size - first_frame._padding_size
             # unpadded_frames = float(self.size) / float(unpadded_frame_size)
             
             padded_frame_size = unpadded_frame_size + 1
-            padded_frames = float(self.size) / float(padded_frame_size)
+            padded_frames = float(mpeg_size) / float(padded_frame_size)
             
             # TODO: NORMAL: Estimation of frame_count:
             # it seems to be either this:

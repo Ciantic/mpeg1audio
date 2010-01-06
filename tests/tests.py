@@ -234,25 +234,6 @@ class VBRHeaderlessTests(unittest.TestCase):
         self.assertEqual(self.mpeg.frames._has_parsed_all, True)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
-#class MPEGSong4Tests(unittest.TestCase):
-#    """CBR (4) tests."""
-#    def setUp(self):
-#        self.mpeg = MPEG(file=open('data/song4.mp3', 'rb'))
-#        
-#    def testDuration(self):
-#        """CBR (4) duration"""
-#        self.assertEqual(self.mpeg.duration, timedelta(seconds=200))
-#        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
-#        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
-#        
-#    def testParsingAll(self):
-#        """CBR (4) parse all"""
-#        self.mpeg.parse_all() 
-#        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
-#        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
-#        self.assertEqual(self.mpeg.duration, timedelta(seconds=200))
-#        self.assertEqual(self.mpeg.sample_count, 8843375)
-        
 class ChunkedReadTests(unittest.TestCase):
     def setUp(self):
         self.file = open('data/song.mp3', 'rb')
