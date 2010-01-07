@@ -18,8 +18,8 @@ license.
 Documentation can be found under `docs` -directory, they are included only
 in releases. Other releases, such as GitHub repository does not include HTML
 generated documents. I'm trying to create automated way to generate EpyDoc
-HTML directly from repository automatically, and put that some place... But 
-until that is implemented, there will be no documentation available online.
+HTML directly from repository as new commits come in... But until that is 
+implemented, there will be *no documentation available online*.
 
 ### Installation
 
