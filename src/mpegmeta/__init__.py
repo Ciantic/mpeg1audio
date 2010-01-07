@@ -44,7 +44,7 @@ needed.
 @copyright: Jari Pennanen, 2010.
 @contact: jari.pennanen@gmail.com
 @license: GNU Lesser General Public License (LGPL). 
-@version: 0.5 Non-published.
+@version: 0.5.1
 
 """
 # Pylint disable settings:

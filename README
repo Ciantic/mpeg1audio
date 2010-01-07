@@ -1,0 +1,2 @@
+Pure python package called "mpegmeta" for parsing MPEG headers for information 
+such as duration.
