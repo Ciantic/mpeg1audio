@@ -73,13 +73,6 @@ needed.
 from datetime import timedelta
 from headers import MPEGHeaderEOFException, MPEGHeaderException
 import headers
-#from headers import get_duration_from_sample_count, \
-#    _get_duration_from_size_bitrate, _get_frame_size, \
-#    get_bitrate, get_bytes, get_channel_mode, \
-#    get_channel_mode_ext, get_emphasis, get_layer, \
-#    get_mpeg_version, get_sample_rate, _get_sample_count, \
-#    get_samples_per_frame, get_vbr_bitrate, get_vbr_frame_size, \
-#    check_sync_bits, MPEGHeaderEOFException, MPEGHeaderException
 import math
 import utils
 import struct
@@ -968,7 +961,7 @@ class MPEG(MPEGFrameBase):
         # TODO: LOW: Some people use random position in the middle, but why?
         #
         # If test position is not given explicitely it is assumed to be at the
-        # middle start and end of looking.
+        # middle of "start" and "end" of looking.
         if test_position is None:
             looking_length = self.filesize - self._ending_start_looking - \
                              self._begin_start_looking
@@ -1118,7 +1111,7 @@ class MPEG(MPEGFrameBase):
                             max_frames=None,
                             begin_frame_search=begin_frame_search))
                 if begin_frame_search < 0 and len(end_frames) < min_frames:
-                    raise MPEGHeaderException('No frames was found during')
+                    raise MPEGHeaderException('Not enough frames was found')
             else:
                 return end_frames
 
