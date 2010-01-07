@@ -29,23 +29,23 @@ class XING(VBRHeader):
         super(XING, self).__init__()
     
     @classmethod
-    def find_and_parse(cls, file, first_mpeg_frame):
+    def find_and_parse(cls, file, first_frame_offset):
         """Find and parse XING header in MPEG File.
         
         @param file: File object.
         @type file: file object
         
-        @param first_mpeg_frame: Offset of first mpeg frame in file.
-        @type first_mpeg_frame: int
+        @param first_frame_offset: Offset of first mpeg frame in file.
+        @type first_frame_offset: int
         
         @return: XING Header in given file.
-        @rtype: L{XING<mpegmeta.XING>}
+        @rtype: L{XING}
         
-        @raise mpegmeta.XINGHeaderException: Raised if XING Header cannot be 
+        @raise XINGHeaderException: Raised if XING Header cannot be 
             parsed or found.
             
         """
-        file.seek(first_mpeg_frame)
+        file.seek(first_frame_offset)
         # TODO: LOW: Search for Xing is not needed, it has specific place, but
         # what?
         chunk_offset, chunk = file.tell(), file.read(1024) 

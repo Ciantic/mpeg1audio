@@ -1,7 +1,8 @@
 """mpegmeta - package tests"""
 
 from datetime import timedelta
-from mpegmeta import MPEG, MPEGFrame, _chunked_reader, _genlimit
+from mpegmeta import MPEG, MPEGFrame
+from mpegmeta import utils
 import mpegmeta
 import os
 import unittest
@@ -240,8 +241,8 @@ class ChunkedReadTests(unittest.TestCase):
         
     def testParseConsecutive(self):
         """Chunked parse consecutive"""
-        chunks = _chunked_reader(self.file, chunk_size=4)
-        self.assertEqual([2283, 3119, 3955], [f.offset for f in _genlimit(MPEGFrame.parse_consecutive(header_offset=2283, chunks=chunks), 2, 3)])
+        chunks = utils.chunked_reader(self.file, chunk_size=4)
+        self.assertEqual([2283, 3119, 3955], [f.offset for f in utils.genlimit(MPEGFrame.parse_consecutive(header_offset=2283, chunks=chunks), 2, 3)])
         
     def testFindAndParse(self):
         """Chunked find and parse"""

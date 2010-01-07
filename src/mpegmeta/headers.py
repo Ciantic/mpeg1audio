@@ -13,53 +13,53 @@ import struct
 
 # Value lookup tables, for parsing headers:
 
-_MPEG_VERSIONS = {
+MPEG_VERSIONS = {
     0 : '2.5',
     2 : '2',
     3 : '1',
 }
     
-_LAYERS = {
+LAYERS = {
     1 : '3',
     2 : '2',
     3 : '1',
 }
 
-_BITRATE__2__2_5 = {
+BITRATE__2__2_5 = {
     '1': (0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256),
     '2': (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
     '3': (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
 }
 
-_BITRATE = {
+BITRATE = {
 '1': {
     '1': (0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
       '2': (0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
       '3': (0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
     },
-'2' : _BITRATE__2__2_5,
-'2.5' : _BITRATE__2__2_5,
+'2' : BITRATE__2__2_5,
+'2.5' : BITRATE__2__2_5,
 } 
 
-_SAMPLERATE = {
+SAMPLERATE = {
     '1':   (44100, 48000, 32000),
     '2':   (22050, 24000, 16000),
     '2.5': (11025, 12000, 8000),
 }
 
-_CHANNEL_MODES = ("stereo", "joint stereo", "dual channel", "mono")
+CHANNEL_MODES = ("stereo", "joint stereo", "dual channel", "mono")
     
-_CHANNEL_MODE_EXT_1__2 = ("4-31", "8-31", "12-31", "16-31") 
+CHANNEL_MODE_EXT_1__2 = ("4-31", "8-31", "12-31", "16-31") 
     
-_CHANNEL_MODE_EXT = {
-    '1': _CHANNEL_MODE_EXT_1__2,
-    '2': _CHANNEL_MODE_EXT_1__2,
+CHANNEL_MODE_EXT = {
+    '1': CHANNEL_MODE_EXT_1__2,
+    '2': CHANNEL_MODE_EXT_1__2,
     '3': ("", "IS", "MS", "IS+MS")
 }
     
-_EMPHASES = ("none", "50/15 ms", "reserved", "CCIT J.17")
+EMPHASES = ("none", "50/15 ms", "reserved", "CCIT J.17")
 
-_SAMPLES_PER_FRAME = {
+SAMPLES_PER_FRAME = {
     '1': {
         '1': 384, '2': 1152, '3': 1152,
     },
@@ -71,17 +71,17 @@ _SAMPLES_PER_FRAME = {
     },
 }
        
-_SLOTS = { '1' : 4, '2' : 1, '3' : 1 }
+SLOTS = { '1' : 4, '2' : 1, '3' : 1 }
 
-_SLOT_COEFFS_2__2_5 = { '1': 12, '2': 144, '3': 72 }
+SLOT_COEFFS_2__2_5 = { '1': 12, '2': 144, '3': 72 }
   
-_SLOT_COEFFS = {
+SLOT_COEFFS = {
     '1': { '1': 12, '2': 144, '3': 144 },
-    '2': _SLOT_COEFFS_2__2_5,
-    '2.5': _SLOT_COEFFS_2__2_5,
+    '2': SLOT_COEFFS_2__2_5,
+    '2.5': SLOT_COEFFS_2__2_5,
 }
 
-def _check_header_sync_bits(bits):
+def check_sync_bits(bits):
     """Check if given bits has sync bits.
     
     @param bits: bits to check for sync bits.
@@ -94,7 +94,7 @@ def _check_header_sync_bits(bits):
     if (bits & 2047) != 2047:
         raise MPEGHeaderException('Sync bits does not match.')
     
-def _get_header_mpeg_version(bits):
+def get_mpeg_version(bits):
     """Get MPEG version from header bits.
     
     @param bits: Two version bits in MPEG header.
@@ -104,18 +104,18 @@ def _get_header_mpeg_version(bits):
     @rtype: string
     
     @todo: Ponder about the usefulness of this being string. Same with
-        L{_get_header_layer}.
+        L{get_layer}.
     
     @raise mpegmeta.MPEGHeaderException: Raised when layer cannot be determined.
     
     """
     
     try:
-        return _MPEG_VERSIONS[bits]
+        return MPEG_VERSIONS[bits]
     except (KeyError, IndexError):
         raise MPEGHeaderException('Unknown MPEG version.')
     
-def _get_header_layer(bits):
+def get_layer(bits):
     """Get layer from MPEG Header bits.
     
     @param bits: Two layer bits in MPEG header.
@@ -130,18 +130,18 @@ def _get_header_layer(bits):
 
     
     try:
-        return _LAYERS[bits]
+        return LAYERS[bits]
     except (KeyError, IndexError):
         raise MPEGHeaderException('Unknown Layer version')
     
-def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
+def get_bitrate(mpeg_version, layer, bitrate_bits):
     """ Get bitrate by mpeg version, layer_bitsbitrate_bitstrate bits index.
     
     @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version}
+        L{get_mpeg_version}
     @type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
+    @param layer: Layer of the MPEG as returned by L{get_layer}.
     @type layer: string
     
     @param bitrate_bits: Four bits in MPEG header.
@@ -160,16 +160,16 @@ def _get_header_bitrate(mpeg_version, layer, bitrate_bits):
         raise MPEGHeaderException('Free bitrate is not implemented, sorry.') 
     
     try:
-        return _BITRATE[mpeg_version][layer][bitrate_bits]
+        return BITRATE[mpeg_version][layer][bitrate_bits]
     except (KeyError, IndexError):
         raise MPEGHeaderException('Bitrate cannot be determined.')
 
     
-def _get_header_sample_rate(mpeg_version, bits):
+def get_sample_rate(mpeg_version, bits):
     """Get sample rate by MPEG version and given MPEG Header sample rate bits.
     
     @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version}
+        L{get_mpeg_version}
     @type mpeg_version: string
     
     @param bits: Sample rate bits in MPEG header.
@@ -184,11 +184,11 @@ def _get_header_sample_rate(mpeg_version, bits):
     """
 
     try:
-        return _SAMPLERATE[mpeg_version][bits]
+        return SAMPLERATE[mpeg_version][bits]
     except (KeyError, TypeError, IndexError):
         raise MPEGHeaderException('Sample rate cannot be determined.')
     
-def _get_header_channel_mode(bits):
+def get_channel_mode(bits):
     """Get channel mode.
     
     @param bits: Mode bits in MPEG header.
@@ -204,15 +204,15 @@ def _get_header_channel_mode(bits):
     
     
     try:
-        return _CHANNEL_MODES[bits]
+        return CHANNEL_MODES[bits]
     except (IndexError, TypeError):
         raise MPEGHeaderException('Channel channel_mode cannot be determined.')
 
-def _get_header_channel_mode_ext(layer, bits):
+def get_channel_mode_ext(layer, bits):
     """Get channel mode extension.
     
     @param layer: Layer of the MPEG as returned by 
-        L{_get_header_layer<mpegmeta._get_header_layer>}.
+        L{get_layer}.
     @type layer: string
     
     @param bits: Extension mode bits in MPEG header.
@@ -228,11 +228,11 @@ def _get_header_channel_mode_ext(layer, bits):
     """
 
     try:
-        return _CHANNEL_MODE_EXT[layer][bits]
+        return CHANNEL_MODE_EXT[layer][bits]
     except (KeyError, TypeError, IndexError):
         raise MPEGHeaderException('Channel mode ext. cannot be determined.')
 
-def _get_header_emphasis(bits):
+def get_emphasis(bits):
     """Get emphasis of audio.
     
     @param bits: Emphasis bits in MPEG header.
@@ -249,17 +249,17 @@ def _get_header_emphasis(bits):
     
     
     try:
-        return _EMPHASES[bits]
+        return EMPHASES[bits]
     except (TypeError, IndexError): 
         raise MPEGHeaderException('Emphasis cannot be determined.')
 
-def _get_header_bytes(header_offset, chunk):
+def get_bytes(header_offset, chunk):
     """Unpacks MPEG Frame header bytes from chunk of data.
     
     Value can then be used to parse and verify the bits.
     
-    @see: L{MPEGFrame.parse<mpegmeta.MPEGFrame.parse>}
-    @see: L{MPEGFrame.find_and_parse<mpegmeta.MPEGFrame.find_and_parse>}
+    @see: L{MPEGFrame.parse}
+    @see: L{MPEGFrame.find_and_parse}
     
     @param header_offset: Position I{within a chunk} where to look for header 
         bytes.
@@ -268,7 +268,7 @@ def _get_header_bytes(header_offset, chunk):
     @param chunk: Chunk of data where to get header bytes.
     @type chunk: string
     
-    @return: Header bytes. Used by L{MPEGFrame.parse<mpegmeta.MPEGFrame.parse>}.
+    @return: Header bytes. Used by L{MPEGFrame.parse}.
     @rtype: int
     
     @raise mpegmeta.MPEGHeaderEOFException: Raised when end of chunk was 
@@ -284,14 +284,18 @@ def _get_header_bytes(header_offset, chunk):
     (header_bytes,) = struct.unpack(">I", header)
     return header_bytes
 
-def _get_samples_per_frame(mpeg_version, layer):
+# Functions below this are calculated from header data, they are not directly
+# part of header data. 
+# ---------------------------------------------------------------------------
+
+def get_samples_per_frame(mpeg_version, layer):
     """Get samples per frame.
     
     @param mpeg_version: Version of the mpeg, as returned by 
-        L{_get_header_mpeg_version}
+        L{get_mpeg_version}
     @type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
+    @param layer: Layer of the MPEG as returned by L{get_layer}.
     @type layer: string
     
     @rtype: int
@@ -302,19 +306,19 @@ def _get_samples_per_frame(mpeg_version, layer):
     
     """
     try:
-        return _SAMPLES_PER_FRAME[mpeg_version][layer]
+        return SAMPLES_PER_FRAME[mpeg_version][layer]
     except (IndexError):
         raise MPEGHeaderException('Samples per frame cannot be determined.')
  
 
-def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
+def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     """Get size.
     
     @param mpeg_version: Version of the MPEG, as returned by 
-        L{_get_header_mpeg_version}
+        L{get_mpeg_version}
     @type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{_get_header_layer}.
+    @param layer: Layer of the MPEG as returned by L{get_layer}.
     @type layer: string
     
     @param sample_rate: Sampling rate in Hz.
@@ -334,8 +338,8 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     
     """
     try:
-        coeff = _SLOT_COEFFS[mpeg_version][layer]
-        slotsize = _SLOTS[layer]
+        coeff = SLOT_COEFFS[mpeg_version][layer]
+        slotsize = SLOTS[layer]
     except (IndexError, KeyError, TypeError):
         raise MPEGHeaderException('Frame size cannot be determined.')
     
@@ -346,7 +350,7 @@ def _get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
         raise MPEGHeaderException('Frame size cannot be calculated.')
     return framesize
 
-def _get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
+def get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
     """Get average bitrate of VBR file.
     
     @param mpeg_size: Size of MPEG in bytes.
@@ -367,7 +371,7 @@ def _get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
     bits_per_second = bytes_per_second * 8
     return bits_per_second / 1000
 
-def _get_sample_count(frame_count, samples_per_frame):
+def get_sample_count(frame_count, samples_per_frame):
     """Get sample count.
     
     @param frame_count: Count of frames.
@@ -382,7 +386,7 @@ def _get_sample_count(frame_count, samples_per_frame):
     """
     return frame_count * samples_per_frame
 
-def _get_duration_from_sample_count(sample_count, sample_rate):
+def get_duration_from_sample_count(sample_count, sample_rate):
     """Get MPEG Duration.
     @param sample_count: Count of samples.
     @type sample_count: int
@@ -396,7 +400,7 @@ def _get_duration_from_sample_count(sample_count, sample_rate):
     """
     return timedelta(seconds=int(round(sample_count / sample_rate)))
     
-def _get_duration_from_size_bitrate(mpeg_size, bitrate):
+def get_duration_from_size_bitrate(mpeg_size, bitrate):
     """Calculate duration from constant bitrate and MPEG Size.
     
     @param mpeg_size: MPEG Size in bytes.
@@ -417,7 +421,7 @@ def _get_duration_from_size_bitrate(mpeg_size, bitrate):
     except ZeroDivisionError:
         raise MPEGHeaderException('Duration cannot be determined.')
     
-def _get_vbr_frame_size(mpeg_size, frame_count):
+def get_vbr_frame_size(mpeg_size, frame_count):
     """Get VBR average frame size.
     
     @param mpeg_size: Size of MPEG in bytes.

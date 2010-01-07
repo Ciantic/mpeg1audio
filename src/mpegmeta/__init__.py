@@ -54,7 +54,7 @@ needed.
 # Protected member access: 
 # pylint: disable-msg=W0212
 
-# Line too long C0301, too many lines per module:
+# Too many lines per module:
 # pylint: disable-msg=C0302
 
 # Too many instance attributes, Too few public methods:
@@ -64,250 +64,25 @@ needed.
 # reStructuredText?
 
 from datetime import timedelta
-from headers import _get_duration_from_sample_count, \
-    _get_duration_from_size_bitrate, _get_frame_size, \
-    _get_header_bitrate, _get_header_bytes, _get_header_channel_mode, \
-    _get_header_channel_mode_ext, _get_header_emphasis, _get_header_layer, \
-    _get_header_mpeg_version, _get_header_sample_rate, _get_sample_count, \
-    _get_samples_per_frame, _get_vbr_bitrate, _get_vbr_frame_size, \
-    _check_header_sync_bits, MPEGHeaderEOFException, MPEGHeaderException
+from headers import MPEGHeaderEOFException, MPEGHeaderException
+import headers
+#from headers import get_duration_from_sample_count, \
+#    _get_duration_from_size_bitrate, _get_frame_size, \
+#    get_bitrate, get_bytes, get_channel_mode, \
+#    get_channel_mode_ext, get_emphasis, get_layer, \
+#    get_mpeg_version, get_sample_rate, _get_sample_count, \
+#    get_samples_per_frame, get_vbr_bitrate, get_vbr_frame_size, \
+#    check_sync_bits, MPEGHeaderEOFException, MPEGHeaderException
 import math
+import utils
 import struct
+
+__all__ = ['MPEGFrameBase', 'MPEGFrameIterator', 'MPEGFrame', 'MPEG', 
+           'MPEGHeaderException', 'MPEGHeaderEOFException']
 
 PARSE_ALL_CHUNK_SIZE = 153600
 """Chunk size of parsing all frames.
 @type: int"""
-
-DEFAULT_CHUNK_SIZE = 8192
-"""Chunk size for various other tasks.
-@type: int"""
-
-def _get_filesize(file):
-    """Get file size from file object.
-    
-    @param file: File object, returned e.g. by L{open<open>}.
-    @type file: file object
-    
-    @return: File size in bytes.
-    @rtype: int
-    
-    """
-    offset = file.tell()
-    file.seek(0, 2)
-    filesize = file.tell()
-    file.seek(offset)
-    return filesize
-    
-def _chunked_reader(file, chunk_size=None, start_position= -1,
-                    max_chunks= -1, reset_offset=True):
-    """Reads file in chunks for performance in handling of big files.
-    
-    @param file: File to be read, e.g. returned by L{open<open>}.
-    @type file: file object
-    
-    @keyword chunk_size: Read in this sized chunks.
-    @type chunk_size: int
-    
-    @keyword start_position: Start position of the chunked reading.
-    @type start_position: int
-    
-    @keyword max_chunks: Maximum amount of chunks, C{-1} means I{infinity}.
-    @type max_chunks: int
-    
-    @keyword reset_offset: Resets the offset of seeking between chunks. Used
-        to correct the cursor position when file seeks / reads occurs inside 
-        chunk iteration.
-    @type reset_offset: bool
-    
-    @return: Generator of file chunks as tuples of chunk offset and chunk.
-    @rtype: generator of (chunk_offset, chunk)
-    
-    """
-    if start_position != -1:
-        file.seek(start_position)
-        
-    offset = file.tell()
-    chunk = ""
-    chunk_size = chunk_size or DEFAULT_CHUNK_SIZE 
-            
-    i = 0
-    while True:
-        if 0 < max_chunks <= i:
-            break
-        
-        if reset_offset:
-            file.seek(offset + len(chunk))
-        
-        offset = file.tell()
-        chunk = file.read(chunk_size)
-        if not chunk:
-            break
-        yield (offset, chunk)
-        i += 1
-
-def _find_all_overlapping(string, occurrence):
-    """Find all overlapping occurrences.
-    
-    @param string: String to be searched.
-    @type string: string
-    
-    @param occurrence: Occurrence to search.
-    @type occurrence: string
-    
-    @return: generator yielding I{positions of occurence}
-    @rtype: generator of int
-    
-    """
-    found = 0
-    
-    while True:
-        found = string.find(occurrence, found)
-        if found != -1:
-            yield found
-        else:
-            return
-        
-        found += 1
-
-# TODO: HIGH: Wrap Open and Close.
-def _wrap_open_close(function, object, filename, mode='rb',
-                    file_handle_name='_file'):
-    """Wraps the objects file handle for execution of function.
-    
-    @param function: Function to be executed during file handle wrap.
-    @type function: callable
-    
-    @param object: Object having the file handle.
-    @type object: object
-    
-    @param filename: Filename opened.
-    @type filename: string
-    
-    @keyword mode: Opening mode.
-    @type mode: string
-    
-    @keyword file_handle_name: Name of the instance variable in object.
-    @type file_handle_name: string
-    
-    @return: New function which being run acts as wrapped function call.
-    @rtype: function
-    
-    """
-    file_handle = getattr(object, file_handle_name)
-    
-    if (file_handle is not None) and (not file_handle.closed):
-        function()
-        return
-    
-    new_file_handle = open(filename, mode)
-    setattr(object, file_handle_name, new_file_handle)
-    function()
-    new_file_handle.close()
-        
-def _join_iterators(iterable1, iterable2):
-    """Joins list and generator.
-    
-    @param iterable1: List to be appended.
-    @type iterable1: Generator
-    
-    @param iterable2: Generator to be appended.
-    @type iterable2: generator
-    
-    @return: Generator yielding first iterable1, and then following iterable2.
-    @rtype: generator
-    
-    """
-    for item1 in iterable1:
-        yield item1
-        
-    for item2 in iterable2:
-        yield item2
-        
-def _genmin(generator, min):
-    """Ensures that generator has min amount of items left.
-    
-    @param generator: Generator to be ensured.
-    @type generator: generator
-    
-    @param min: Minimum amount of items in generator.
-    @type min: int
-    
-    @raise ValueError: Raised when minimum is not met.
-    
-        >>> def yrange(n): # Note that xrange doesn't work, requires next()
-        ...     for i in range(n):
-        ...         yield i
-        ... 
-        >>> _genmin(yrange(5), min=4) #doctest: +ELLIPSIS
-        <generator object _join_iterators at ...>
-        >>> _genmin(yrange(5), min=5) #doctest: +ELLIPSIS
-        <generator object _join_iterators at ...>
-        >>> _genmin(yrange(5), min=6)
-        Traceback (most recent call last):
-          ...
-        ValueError: Minimum amount not met.
-        >>> 
-        
-    """
-    cache = []
-    for index in range(min): #@UnusedVariable
-        try:
-            cache.append(generator.next())
-        except StopIteration:
-            raise ValueError('Minimum amount not met.')
-        
-    return _join_iterators(cache, generator)
-
-def _genmax(generator, max):
-    """Ensures that generator does not exceed given max when yielding.
-    
-    For example when you have generator that goes to infinity, you might want to
-    instead only get 100 first instead.
-    
-    @param generator: Generator
-    @type generator: generator
-
-    @param max: Maximum amount of items yields.
-    @type max: int
-    
-    @rtype: generator
-    @return: Generator limited by max.
-    
-        >>> list(_genmax(xrange(100), max=3))
-        [0, 1, 2]
-        
-    """
-    for index, item in enumerate(generator):
-        yield item
-        if index + 1 >= max:
-            return
-        
-def _genlimit(generator, min, max):
-    """Limit generator I{item count} between min and max.
-    
-    @param generator: Generator
-    @type generator: generator
-
-    @param min: Minimum amount of items in generator.
-    @type min: int, or None
-    
-    @param max: Maximum amount of items.
-    @type max: int, or None
-    
-    @note: If both are C{None} this returns the same generator.
-    @raise ValueError: Raised when minimum is not met.
-    
-    """
-    if (min is None) and (max is None):
-        return generator
-    
-    if min is not None:
-        generator = _genmin(generator, min)
-        
-    if max is not None:
-        generator = _genmax(generator, max)
-        
-    return generator
         
 class MPEGFrameBase(object):
     """MPEG frame base, should not be instated, only inherited.
@@ -428,18 +203,18 @@ class MPEGFrame(MPEGFrameBase):
         @type file: file object
         
         @param chunk_size: Chunked reading size, C{None} defaults to 
-            L{DEFAULT_CHUNK_SIZE}.
+            L{utils.DEFAULT_CHUNK_SIZE}.
         @type chunk_size: int
         
         @note: First frame of generator is I{next} frame.
         @return: Generator that iterates forward from this frame.
-        @rtype: generator of L{MPEGFrame <mpegmeta.MPEGFrame>}
+        @rtype: generator of L{MPEGFrame}
         
         """
         # TODO: LOW: Free bitrate.
         next_frame_offset = self.offset + self.size
-        chunks = _chunked_reader(file, start_position=next_frame_offset,
-                                chunk_size=(chunk_size or DEFAULT_CHUNK_SIZE))
+        chunks = utils.chunked_reader(file, start_position=next_frame_offset,
+                                       chunk_size=chunk_size)
         return MPEGFrame.parse_consecutive(next_frame_offset, chunks)
     
 #    def get_backward_iterator(self, file):
@@ -460,7 +235,7 @@ class MPEGFrame(MPEGFrameBase):
         @type max_frames: int, or None
         
         @keyword chunk_size: Size of chunked reading. Defaults to 
-            L{DEFAULT_CHUNK_SIZE}, minimum C{4}.
+            L{utils.DEFAULT_CHUNK_SIZE}, minimum C{4}.
         @type chunk_size: int
         
         @keyword begin_frame_search: Begin frame search from this position in 
@@ -482,17 +257,17 @@ class MPEGFrame(MPEGFrameBase):
         @type max_consecutive_chunks: int
         
         """
-        chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
+        chunk_size = chunk_size or utils.DEFAULT_CHUNK_SIZE
         
         chunk_size = max(chunk_size, 4)
-        chunks = _chunked_reader(file, chunk_size=chunk_size,
+        chunks = utils.chunked_reader(file, chunk_size=chunk_size,
                                 start_position=begin_frame_search,
                                 max_chunks=max_chunks)
 
         for chunk_offset, chunk in chunks:
-            for found in _find_all_overlapping(chunk, chr(255)):
+            for found in utils.find_all_overlapping(chunk, chr(255)):
                 consecutive_chunks = \
-                    _chunked_reader(file,
+                    utils.chunked_reader(file,
                                     chunk_size=chunk_size,
                                     start_position=chunk_offset + found,
                                     max_chunks=max_consecutive_chunks)
@@ -500,7 +275,7 @@ class MPEGFrame(MPEGFrameBase):
                 frames = MPEGFrame.parse_consecutive(chunk_offset + found,
                                                      consecutive_chunks) 
                 try:
-                    return _genlimit(frames, lazily_after + 1, max_frames)
+                    return utils.genlimit(frames, lazily_after + 1, max_frames)
                 except ValueError:
                     pass
         return []
@@ -521,7 +296,7 @@ class MPEGFrame(MPEGFrameBase):
         @return: Generator yielding MPEG frames.
         @rtype: generator of L{MPEGFrames<mpegmeta.MPEGFrame>}
         
-        @see: L{_chunked_reader<mpegmeta._chunked_reader>}
+        @see: L{utils.chunked_reader}
         
         """
         previous_mpegframe = None
@@ -552,7 +327,7 @@ class MPEGFrame(MPEGFrameBase):
                 
                 # Get header bytes within chunk
                 try:
-                    header_bytes = _get_header_bytes(next_header_offset, chunk)
+                    header_bytes = headers.get_bytes(next_header_offset, chunk)
                 except MPEGHeaderEOFException:
                     # We need next chunk, end of this chunk was reached
                     break
@@ -577,10 +352,10 @@ class MPEGFrame(MPEGFrameBase):
         """Tries to create MPEG Frame from given bytes.
         
         @param bytes: MPEG Header bytes. Usually obtained with 
-            L{_get_header_bytes()<mpegmeta._get_header_bytes>}
+            L{headers.get_bytes}
         @type bytes: int
         
-        @rtype: L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @rtype: L{MPEGFrame}
         @return: MPEG Frame
         
         @raise mpegmeta.MPEGHeaderException: Raised if MPEG Frame cannot be 
@@ -591,7 +366,7 @@ class MPEGFrame(MPEGFrameBase):
         # http://www.codeproject.com/KB/audio-video/mpegaudioinfo.aspx#CRC
         
         # Header synchronization bits
-        _check_header_sync_bits((bytes >> 21) & 2047) 
+        headers.check_sync_bits((bytes >> 21) & 2047) 
         
         # Header parseable information
         mpeg_version_bits = (bytes >> 19) & 3    
@@ -609,16 +384,16 @@ class MPEGFrame(MPEGFrameBase):
 
         self = MPEGFrame()
         
-        self.version = _get_header_mpeg_version(mpeg_version_bits)
-        self.layer = _get_header_layer(layer_bits)
-        self.bitrate = _get_header_bitrate(self.version, self.layer,
+        self.version = headers.get_mpeg_version(mpeg_version_bits)
+        self.layer = headers.get_layer(layer_bits)
+        self.bitrate = headers.get_bitrate(self.version, self.layer,
                                            bitrate_bits)
-        self.sample_rate = _get_header_sample_rate(self.version,
+        self.sample_rate = headers.get_sample_rate(self.version,
                                                    samplerate_bits)
-        self.channel_mode = _get_header_channel_mode(mode_bits)
+        self.channel_mode = headers.get_channel_mode(mode_bits)
         self.channel_mode_extension = \
-            _get_header_channel_mode_ext(self.layer, mode_extension_bits)
-        self.emphasis = _get_header_emphasis(emphasis_bits)
+            headers.get_channel_mode_ext(self.layer, mode_extension_bits)
+        self.emphasis = headers.get_emphasis(emphasis_bits)
         
         self._padding_size = padding_bit
         self.is_private = private_bit == 1
@@ -627,10 +402,11 @@ class MPEGFrame(MPEGFrameBase):
         self.is_protected = protection_bit == 1
         
         # Non-header parseable information
-        self.samples_per_frame = _get_samples_per_frame(self.version,
-                                                        self.layer)
-        self.size = _get_frame_size(self.version, self.layer, self.sample_rate,
-                                    self.bitrate, self._padding_size)
+        self.samples_per_frame = headers.get_samples_per_frame(self.version,
+                                                               self.layer)
+        self.size = headers.get_frame_size(self.version, self.layer, 
+                                           self.sample_rate, self.bitrate, 
+                                           self._padding_size)
         return self
     
 class MPEGFrameIterator(object):
@@ -718,7 +494,7 @@ class MPEGFrameIterator(object):
         # Join begin frames, and generator yielding next frames from that on.
         
         # TODO: ASSUMPTION: Iterating frames uses parsing all chunk size.
-        return _join_iterators(\
+        return utils.join_iterators(\
                  self._begin_frames,
                  self._begin_frames[-1].\
                     get_forward_iterator(self.mpeg._file,
@@ -812,7 +588,6 @@ class MPEG(MPEGFrameBase):
         
         @todo: If given filename, create file and close it always automatically 
             when not needed.
-        @todo: C{parse_all_frames} is not implemented!
         
         @param file: File handle returned e.g. by open()
         @type file: file
@@ -856,7 +631,7 @@ class MPEG(MPEGFrameBase):
         @type: bool
         """
         
-        self.filesize = _get_filesize(file)
+        self.filesize = utils.get_filesize(file)
         """Filesize in bytes.
         @type: int
         """
@@ -966,7 +741,7 @@ class MPEG(MPEGFrameBase):
         if self.is_vbr:
             sample_count = self._get_sample_count(parse_all)
             mpeg_size = self._get_size()
-            self.bitrate = _get_vbr_bitrate(mpeg_size, sample_count,
+            self.bitrate = headers.get_vbr_bitrate(mpeg_size, sample_count,
                                             self.sample_rate)
             
         return self._bitrate
@@ -1033,7 +808,7 @@ class MPEG(MPEGFrameBase):
             # VBR
             frame_count = self._get_frame_count()
             mpeg_size = self._get_size()
-            self.frame_size = _get_vbr_frame_size(mpeg_size, frame_count)
+            self.frame_size = headers.get_vbr_frame_size(mpeg_size, frame_count)
             
         return self._frame_size
     
@@ -1056,7 +831,7 @@ class MPEG(MPEGFrameBase):
                                                   parse_ending=True)
             if sample_count is not None:
                 self.duration = \
-                    _get_duration_from_sample_count(sample_count,
+                    headers.get_duration_from_sample_count(sample_count,
                                                     self.sample_rate)
 #            mpeg_size = self._get_size()
 #            bitrate = self._get_bitrate(parse_all)
@@ -1069,7 +844,7 @@ class MPEG(MPEGFrameBase):
             sample_count = self._get_sample_count(parse_all)
             if sample_count is not None:
                 self.duration = \
-                    _get_duration_from_sample_count(sample_count,
+                    headers.get_duration_from_sample_count(sample_count,
                                                     self.sample_rate)
                 
         return self._duration
@@ -1280,7 +1055,7 @@ class MPEG(MPEGFrameBase):
             
         """
         try:
-            return _genmin(\
+            return utils.genmin(\
                      MPEGFrame.find_and_parse(file=self._file,
                                               max_frames=max_frames,
                                               begin_frame_search=begin_offset),

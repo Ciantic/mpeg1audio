@@ -1,4 +1,4 @@
-"""VBRI Header related parsing."""
+"""VBRI (Fraunhofer Encoder) Header parsing package."""
 
 # Pylint disable settings:
 # ------------------------
@@ -34,26 +34,26 @@ class VBRI(VBRHeader):
         @type: int"""
         
     @classmethod
-    def find_and_parse(cls, file, first_mpeg_frame):
+    def find_and_parse(cls, file, first_frame_offset):
         """Find and parse VBRI header in MPEG File.
         
         @param file: File object.
         @type file: file object
         
-        @param first_mpeg_frame: Offset of first mpeg frame in file.
-        @type first_mpeg_frame: int
+        @param first_frame_offset: Offset of first mpeg frame in file.
+        @type first_frame_offset: int
         
         @return: XING Header in given file.
-        @rtype: L{XING<mpegmeta.XING>}
+        @rtype: L{VBRI}
         
-        @raise mpegmeta.VBRIHeaderException: Raised if VBRI Header cannot be 
+        @raise VBRIHeaderException: Raised if VBRI Header cannot be 
             parsed or found.
             
         """
-        file.seek(first_mpeg_frame)
+        file.seek(first_frame_offset)
         chunk_offset, chunk = file.tell(), file.read(1024)
         
-        beginning_of_vbri = 4 + 32 # Header 4 bytes, VBRI is in 32. byte
+        beginning_of_vbri = 4 + 32 # Header 4 bytes, VBRI is in 32nd byte.
         
         # If positive match for VBRI
         if chunk[beginning_of_vbri:beginning_of_vbri + 4] == "VBRI":
