@@ -87,7 +87,7 @@ def check_sync_bits(bits):
     @param bits: bits to check for sync bits.
     @type bits: int
     
-    @raise mpegmeta.MPEGHeaderException: Raised if bits does not contain sync 
+    @raise mp3meta.MPEGHeaderException: Raised if bits does not contain sync 
         bits.
     
     """
@@ -106,7 +106,7 @@ def get_mpeg_version(bits):
     @todo: Ponder about the usefulness of this being string. Same with
         L{get_layer}.
     
-    @raise mpegmeta.MPEGHeaderException: Raised when layer cannot be determined.
+    @raise mp3meta.MPEGHeaderException: Raised when layer cannot be determined.
     
     """
     
@@ -124,7 +124,7 @@ def get_layer(bits):
     @return: MPEG Layer, one of the following values: C{'1', '2', '3'}.
     @rtype: string
     
-    @raise mpegmeta.MPEGHeaderException: Raised when layer cannot be determined.
+    @raise mp3meta.MPEGHeaderException: Raised when layer cannot be determined.
     
     """
 
@@ -149,7 +149,7 @@ def get_bitrate(mpeg_version, layer, bitrate_bits):
     @return: Bitrate in I{kilobits} per second.
     @rtype: int
     
-    @raise mpegmeta.MPEGHeaderException: Raised when bitrate cannot be
+    @raise mp3meta.MPEGHeaderException: Raised when bitrate cannot be
         determined.
     
     """
@@ -177,7 +177,7 @@ def get_sample_rate(mpeg_version, bits):
     @return: Sample rate in Hz
     @rtype: int
     
-    @raise mpegmeta.MPEGHeaderException: Raised when sample rate cannot be
+    @raise mp3meta.MPEGHeaderException: Raised when sample rate cannot be
         determined.
     
     """
@@ -197,7 +197,7 @@ def get_channel_mode(bits):
         C{"dual channel"}, C{"mono"}. 
     @rtype: string
     
-    @raise mpegmeta.MPEGHeaderException: Raised if channel mode cannot be 
+    @raise mp3meta.MPEGHeaderException: Raised if channel mode cannot be 
         determined.
     """
     
@@ -221,7 +221,7 @@ def get_channel_mode_ext(layer, bits):
     @return: Channel extension mode. One of the following values: C{"4-31", 
         "8-31", "12-31", "16-31", "", "IS", "MS", "IS+MS"}
        
-    @raise mpegmeta.MPEGHeaderException: Raised if channel mode extension cannot 
+    @raise mp3meta.MPEGHeaderException: Raised if channel mode extension cannot 
         be determined.
         
     """
@@ -241,7 +241,7 @@ def get_emphasis(bits):
         "reserved", "CCIT J.17"}
     @rtype: string 
     
-    @raise mpegmeta.MPEGHeaderException: Raised when emphasis cannot be
+    @raise mp3meta.MPEGHeaderException: Raised when emphasis cannot be
         determined.
     
     """
@@ -270,7 +270,7 @@ def get_bytes(header_offset, chunk):
     @return: Header bytes. Used by L{MPEGFrame.parse}.
     @rtype: int
     
-    @raise mpegmeta.MPEGHeaderEOFException: Raised when end of chunk was 
+    @raise mp3meta.MPEGHeaderEOFException: Raised when end of chunk was 
         reached.
     
     """
@@ -300,7 +300,7 @@ def get_samples_per_frame(mpeg_version, layer):
     @rtype: int
     @return: Samples per frame.
     
-    @raise mpegmeta.MPEGHeaderException: Raised if samples per frame cannot be 
+    @raise mp3meta.MPEGHeaderException: Raised if samples per frame cannot be 
         determined.
     
     """
@@ -332,7 +332,7 @@ def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     @return: Frame size in bytes.
     @rtype: int
     
-    @raise mpegmeta.MPEGHeaderException: Raised when frame size cannot be 
+    @raise mp3meta.MPEGHeaderException: Raised when frame size cannot be 
         determined.
     
     """
@@ -408,7 +408,7 @@ def get_duration_from_size_bitrate(mpeg_size, bitrate):
     @param bitrate: Bitrate in kilobits per second, for example 192.
     @type bitrate: int
     
-    @raise mpegmeta.MPEGHeaderException: Raised if duration cannot be 
+    @raise mp3meta.MPEGHeaderException: Raised if duration cannot be 
         determined.
     
     @return: Duration of the MPEG, with second accuracy.

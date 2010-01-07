@@ -1,9 +1,9 @@
-"""mpegmeta - package tests"""
+"""mp3meta - package tests"""
 
 from datetime import timedelta
-from mpegmeta import MPEG, MPEGFrame
-from mpegmeta import utils
-import mpegmeta
+from mp3meta import MPEG, MPEGFrame
+from mp3meta import utils
+import mp3meta
 import os
 import unittest
 import doctest
@@ -250,10 +250,10 @@ class ChunkedReadTests(unittest.TestCase):
 
 class DocTests(unittest.TestCase):
     """Doc tests."""
-    def testMpegMeta(self):
-        """Doc test mpegmeta"""
-        doctest.testmod(mpegmeta, raise_on_error=True)
+    def testmp3meta(self):
+        """Doc test mp3meta"""
+        doctest.testmod(mp3meta, raise_on_error=True)
         
-    def testMpegMetaUtils(self):
-        """Doc test mpegmeta.utils"""
-        doctest.testmod(mpegmeta.utils, raise_on_error=True)
+    def testmp3metaUtils(self):
+        """Doc test mp3meta.utils"""
+        doctest.testmod(mp3meta.utils, raise_on_error=True)

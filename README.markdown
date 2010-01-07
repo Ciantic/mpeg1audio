@@ -1,9 +1,9 @@
-mpegmeta
+mp3meta
 ========
 
-Pure Python MPEG related meta information retrieval package `mpegmeta`.
+Pure Python MPEG related meta information retrieval package `mp3meta`.
 
- * [GitHub repository of `mpegmeta`](http://github.com/Ciantic/mpegmeta.git)
+ * [GitHub repository of `mp3meta`](http://github.com/Ciantic/mp3meta.git)
 
 Capable of retrieving duration (also duration of VBR MP3 files, using XING and 
 VBRI headers and parsing all frames), bitrate, average bitrate, sample count... 
@@ -33,10 +33,10 @@ command.
 
 ### Usage example
 
-    >>> import mpegmeta
+    >>> import mp3meta
     >>> try:
-    ...     mpeg = mpegmeta.MPEG(open('data/song.mp3', 'rb'))
-    ... except mpegmeta.MPEGHeaderException:
+    ...     mpeg = mp3meta.MPEG(open('data/song.mp3', 'rb'))
+    ... except mp3meta.MPEGHeaderException:
     ...     pass
     ... else:
     ...     print mpeg.duration
@@ -57,11 +57,11 @@ and Free bitrate -MP3 files.
 This project uses PyDev and Eclipse, and for this reason there are `.project` 
 and `.pydevproject` files. For documentation there is EpyDoc launch
 configuration that can generate documentation from within Eclipse, see
-`docs/EpyDoc for MPEGMeta.launch`. Currently the launch configuration has one
+`docs/EpyDoc for mp3meta.launch`. Currently the launch configuration has one
 hard-coded file path, so it is wise to edit this configuration before using it.
 
 There is also launch configuration for unit testing `tests/Tests for 
-mpegmeta.launch`, it seems to be dependant on naming of `mpegmeta` in workspace. 
+mp3meta.launch`, it seems to be dependant on naming of `mp3meta` in workspace. 
 
 ### pylint
 

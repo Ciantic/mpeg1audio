@@ -11,7 +11,7 @@
 # Re-define built-in:
 # pylint: disable-msg=W0622
 
-from mpegmeta import VBRHeader
+from mp3meta import VBRHeader
 import struct
 
 class VBRI(VBRHeader):

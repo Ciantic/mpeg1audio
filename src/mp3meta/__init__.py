@@ -1,5 +1,5 @@
 """
-mpegmeta
+mp3meta
 
 Python package which is intended to gather all kinds of MPEG related meta 
 information from file. Such as duration of MPEG file, average bitrate for 
@@ -18,10 +18,10 @@ Usage examples
 Simple example:
 ---------------
 
-    >>> import mpegmeta
+    >>> import mp3meta
     >>> try:
-    ...    mpeg = mpegmeta.MPEG(open('data/song.mp3', 'rb'))
-    ... except mpegmeta.MPEGHeaderException:
+    ...    mpeg = mp3meta.MPEG(open('data/song.mp3', 'rb'))
+    ... except mp3meta.MPEGHeaderException:
     ...    pass
     ... else:
     ...    print mpeg.duration
@@ -30,8 +30,8 @@ Simple example:
 Lazy parsing
 ============
 
-Notable feature of mpegmeta is the fact that it L{tries to parse
-lazily<mpegmeta.MPEG>}. It doesn't parse all frames, or ending unless really
+Notable feature of mp3meta is the fact that it L{tries to parse
+lazily<mp3meta.MPEG>}. It doesn't parse all frames, or ending unless really
 needed.
 
 @todo: Free bitrate, this should be simple to implement, though I haven't yet
@@ -295,7 +295,7 @@ class MPEGFrame(MPEGFrameBase):
         @type chunks: generator, or list
         
         @return: Generator yielding MPEG frames.
-        @rtype: generator of L{MPEGFrames<mpegmeta.MPEGFrame>}
+        @rtype: generator of L{MPEGFrames<mp3meta.MPEGFrame>}
         
         @see: L{utils.chunked_reader}
         
@@ -359,7 +359,7 @@ class MPEGFrame(MPEGFrameBase):
         @rtype: L{MPEGFrame}
         @return: MPEG Frame
         
-        @raise mpegmeta.MPEGHeaderException: Raised if MPEG Frame cannot be 
+        @raise mp3meta.MPEGHeaderException: Raised if MPEG Frame cannot be 
             parsed.
             
         """
@@ -416,7 +416,7 @@ class MPEGFrameIterator(object):
         """Create MPEG frame iterator.
         
         @param mpeg: MPEG Which frames are to be iterated over.
-        @type mpeg: L{MPEG<mpegmeta.MPEG>}
+        @type mpeg: L{MPEG<mp3meta.MPEG>}
         
         @param begin_frames: First frames of MPEG.
         @type begin_frames: function giving list of L{MPEGFrame}
@@ -427,17 +427,17 @@ class MPEGFrameIterator(object):
         """
         self.mpeg = mpeg
         """MPEG which frames are iterated.
-        @type: L{MPEG<mpegmeta.MPEG>}
+        @type: L{MPEG<mp3meta.MPEG>}
         """
         
         self._begin_frames = begin_frames
         """Begin frames.
-        @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @type: list of L{MPEGFrame<mp3meta.MPEGFrame>}
         """
         
         self._end_frames = end_frames
         """End frames.
-        @type: list of L{MPEGFrame<mpegmeta.MPEGFrame>}, or None
+        @type: list of L{MPEGFrame<mp3meta.MPEGFrame>}, or None
         """
         
         self._has_parsed_all = False
@@ -537,8 +537,8 @@ class MPEG(MPEGFrameBase):
     ending of the file. Being lazy for MPEG object means that it has passed at
     least:
     
-     1. L{is mpeg test <mpegmeta.MPEG._is_mpeg_test>} returned without exception.
-     2. L{beginning parsing <mpegmeta.MPEG._parse_beginning>} is done.
+     1. L{is mpeg test <mp3meta.MPEG._is_mpeg_test>} returned without exception.
+     2. L{beginning parsing <mp3meta.MPEG._parse_beginning>} is done.
      
     Normal initialization of MPEG object does these things, user of this class 
     does not need to care about these. All MPEG objects are lazy, when they have
@@ -577,7 +577,7 @@ class MPEG(MPEGFrameBase):
     On the other hand, if the user doesn't want to parse all frames, and is 
     satisfied for C{None} for the cases where it cannot be calculated without 
     full parsing, the API gives you possibility to use appropriate getters e.g. 
-    L{_get_duration <mpegmeta.MPEG._get_duration>} with arguments to adjust for
+    L{_get_duration <mp3meta.MPEG._get_duration>} with arguments to adjust for
     the case.
     
     @note: This does not provide any kind of updating or playing the mpeg 
@@ -618,7 +618,7 @@ class MPEG(MPEGFrameBase):
             possibility that given file is not MPEG, we can rule them out fast. 
         @type mpeg_test: bool
         
-        @raise mpegmeta.MPEGHeaderException: Raised if header cannot be found.
+        @raise mp3meta.MPEGHeaderException: Raised if header cannot be found.
         
         """
         super(MPEG, self).__init__()
@@ -640,17 +640,17 @@ class MPEG(MPEGFrameBase):
         
         self.xing = None
         """XING Header, if any.
-        @type: L{XING<mpegmeta.XING>}, or None
+        @type: L{XING<mp3meta.XING>}, or None
         """
         
         self.vbri = None
         """VBRI Header, if any.
-        @type: L{VBRI<mpegmeta.VBRI>}, or None
+        @type: L{VBRI<mp3meta.VBRI>}, or None
         """
         
         self.frames = None
         """All MPEG frames.
-        @type: iterable of L{MPEGFrames<mpegmeta.MPEGFrame>}
+        @type: iterable of L{MPEGFrames<mp3meta.MPEGFrame>}
         """
         
         self._frame_count = None
@@ -909,8 +909,8 @@ class MPEG(MPEGFrameBase):
     
     def _parse_xing(self):
         """Tries to parse and set XING from first mpeg frame.
-        @see: L{MPEG.xing<mpegmeta.MPEG.xing>}
-        @see: L{XING<mpegmeta.XING>}
+        @see: L{MPEG.xing<mp3meta.MPEG.xing>}
+        @see: L{XING<mp3meta.XING>}
         
         """
         from xing import XING, XINGHeaderException
@@ -923,8 +923,8 @@ class MPEG(MPEGFrameBase):
             
     def _parse_vbri(self):
         """Tries to parse and set VBRI from first mpeg frame.
-        @see: L{MPEG.vbri<mpegmeta.MPEG.vbri>}
-        @see: L{VBRI<mpegmeta.VBRI>}
+        @see: L{MPEG.vbri<mp3meta.MPEG.vbri>}
+        @see: L{VBRI<mp3meta.VBRI>}
         
         """
         from vbri import VBRI, VBRIHeaderException
@@ -942,7 +942,7 @@ class MPEG(MPEGFrameBase):
         Validates that from middle of the file we can find three valid 
         consecutive MPEG frames. 
         
-        @raise mpegmeta.MPEGHeaderException: Raised if MPEG frames cannot be 
+        @raise mp3meta.MPEGHeaderException: Raised if MPEG frames cannot be 
             found.
             
         @return: List of test MPEG frames.
@@ -982,12 +982,12 @@ class MPEG(MPEGFrameBase):
         MPEG file with good probability, only if the file is VBR this fails.
         
         @param first_mpegframe: First MPEG frame of the file.
-        @type first_mpegframe: L{MPEGFrame<mpegmeta.MPEGFrame>}
+        @type first_mpegframe: L{MPEGFrame<mp3meta.MPEGFrame>}
         
         @param mpegframes: List of MPEG frames, order and position does not 
             matter, only thing matters are the fact they are from same MPEG. 
             These are used determine the VBR status of the file. 
-        @type mpegframes: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
+        @type mpegframes: list of L{MPEGFrames<mp3meta.MPEGFrame>}
         
         """
         # Copy values of MPEG Frame to MPEG, where applicable.
@@ -1050,9 +1050,9 @@ class MPEG(MPEGFrameBase):
         @type max_frames: int
         
         @return: List of MPEG frames.
-        @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
+        @rtype: list of L{MPEGFrames<mp3meta.MPEGFrame>}
         
-        @raise mpegmeta.MPEGHeaderException: Raised if no frames was found. This
+        @raise mp3meta.MPEGHeaderException: Raised if no frames was found. This
             should not happen if L{MPEG._is_mpeg_test} has passed.
             
         """
@@ -1087,9 +1087,9 @@ class MPEG(MPEGFrameBase):
         
         @note: This might take a long time for files that does not have frames.
         @return: List of MPEG frames, amount of items is variable.
-        @rtype: list of L{MPEGFrames<mpegmeta.MPEGFrame>}
+        @rtype: list of L{MPEGFrames<mp3meta.MPEGFrame>}
         
-        @raise mpegmeta.MPEGHeaderEOFException: Raised if whole file does not
+        @raise mp3meta.MPEGHeaderEOFException: Raised if whole file does not
             include any frames. This should not happen if L{MPEG._is_mpeg_test}
             has passed.
         
