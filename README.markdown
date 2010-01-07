@@ -12,7 +12,7 @@ Documentation can be found in under docs -directory, they are included only
 in releases. Other releases, such as GitHub repository does not include HTML
 generated documents.
 
-This package uses Distutils and is easily installed using that:
+This package uses distutils and is easily installed using that:
 
 	$ setup.py install
 	
