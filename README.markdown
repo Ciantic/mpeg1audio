@@ -35,11 +35,11 @@ command.
 
     >>> import mp3meta
     >>> try:
-    ...     mp3 = mp3meta.MPEGAudio(open('data/song.mp3', 'rb'))
-    ... except mp3meta.MPEGHeaderException:
-    ...     pass
+    ...    mp3 = mp3meta.MPEGAudio(open('data/song.mp3', 'rb'))
+    ... except mp3meta.MPEGAudioHeaderException:
+    ...    pass
     ... else:
-    ...     print mp3.duration
+    ...    print mp3.duration
     0:03:12
     
 ## For developers of this package
