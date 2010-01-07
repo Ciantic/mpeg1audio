@@ -41,3 +41,26 @@ command.
     ... else:
     ...     print mpeg.duration
     0:03:12
+    
+## For developers of this package
+
+### Unit testing
+
+There exists directory `tests/` which has `tests.py` and `benchmarks.py`,
+but I have not provided contents of `tests/data/` yet. I'm looking for MP3 files
+that can be distributed without copyright issues. Currently I'm in search for
+pretty much any kind of files: Normal CBR, VBR Xing, VBRI Fraunhofer encoded, 
+and Free bitrate -MP3 files.
+
+### PyDev and Eclipse
+
+This project uses PyDev and Eclipse, and for this reason there are `.project` 
+and `.pydevproject` files. For documentation there is EpyDoc launch
+configuration that can generate documentation from within Eclipse, see
+`docs/EpyDoc for MPEGMeta.launch`. Currently the launch configuration has one
+hard-coded file path, so it is wise to edit this configuration before using it.
+
+### pylint
+
+All source files are also analyzed using pylint, and in ideal case all source
+files of *package* should be free of pylint errors or warnings.
