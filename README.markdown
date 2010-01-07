@@ -11,6 +11,8 @@ This was done because other packages seemed to be licensed under GPL, this one
 is licensed under LGPL. License might be changed in future to MIT License / BSD 
 license.
 
+## For users of this package
+
 ### Documentation
 
 Documentation can be found under `docs` -directory, they are included only
