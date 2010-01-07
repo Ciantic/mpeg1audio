@@ -60,6 +60,9 @@ configuration that can generate documentation from within Eclipse, see
 `docs/EpyDoc for MPEGMeta.launch`. Currently the launch configuration has one
 hard-coded file path, so it is wise to edit this configuration before using it.
 
+There is also launch configuration for unit testing `tests/Tests for 
+mpegmeta.launch`, it seems to be dependant on naming of `mpegmeta` in workspace. 
+
 ### pylint
 
 All source files are also analyzed using pylint, and in ideal case all source
