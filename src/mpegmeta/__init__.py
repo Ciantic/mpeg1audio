@@ -5,11 +5,12 @@ Python package which is intended to gather all kinds of MPEG related meta
 information from file. Such as duration of MPEG file, average bitrate for 
 variable bitrate (VBR) MPEG files, etc.
 
-Most of the information about MPEG Headers is from excellent article 
-U{MPEG Audio Frame Header By Konrad Windszus, in Code Project
+Most of the information about MPEG Headers is from excellent article U{MPEG
+Audio Frame Header By Konrad Windszus, in Code Project
 <http://www.codeproject.com/KB/audio-video/mpegaudioinfo.aspx#MPEGAudioFrame>}.
-If you are solely interested on details of MPEG headers that is a good place to 
-start. I have taken some paragraphs to documentation from that article.
+If you are solely interested on details of MPEG headers that is a good place to
+start. Unit tests (C{tests/} -directory) are matched against the
+MPEGAudioInfo.exe provided in that project.
 
 Usage examples
 ==============
@@ -29,12 +30,18 @@ Simple example:
 Lazy parsing
 ============
 
-Notable feature of mpegmeta is the fact that it L{tries to parse information
-lazily <mpegmeta.MPEG>}. It doesn't parse all frames, or ending unless really
+Notable feature of mpegmeta is the fact that it L{tries to parse
+lazily<mpegmeta.MPEG>}. It doesn't parse all frames, or ending unless really
 needed.
 
+@todo: Free bitrate, this should be simple to implement, though I haven't yet
+    found any free bitrate files which to test against.
+
+@todo: Table of contents for VBR, this is not high on priority list since we
+    don't need to seek the MPEG really.
+
 @author: Jari Pennanen
-@copyright: Jari Pennanen, 2009.
+@copyright: Jari Pennanen, 2010.
 @contact: jari.pennanen@gmail.com
 @license: GNU Lesser General Public License (LGPL). 
 @version: 0.5 Non-published.
@@ -78,7 +85,8 @@ import utils
 import struct
 
 __all__ = ['MPEGFrameBase', 'MPEGFrameIterator', 'MPEGFrame', 'MPEG', 
-           'MPEGHeaderException', 'MPEGHeaderEOFException']
+           'MPEGHeaderException', 'MPEGHeaderEOFException', 
+           'PARSE_ALL_CHUNK_SIZE']
 
 PARSE_ALL_CHUNK_SIZE = 153600
 """Chunk size of parsing all frames.
@@ -532,8 +540,9 @@ class MPEG(MPEGFrameBase):
     Laziness works when ...
     -----------------------
     
-    Laziness works for the cases where we don't need to parse all frames. Being
-    lazy for MPEG object means that it has passed at least:
+    Laziness works for the cases where we don't need to parse all frames, or
+    ending of the file. Being lazy for MPEG object means that it has passed at
+    least:
     
      1. L{is mpeg test <mpegmeta.MPEG._is_mpeg_test>} returned without exception.
      2. L{beginning parsing <mpegmeta.MPEG._parse_beginning>} is done.

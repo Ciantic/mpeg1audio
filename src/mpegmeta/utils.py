@@ -1,4 +1,4 @@
-"""MPEG meta package utils helpers."""
+"""Helpers used in package."""
 
 # Pylint disable settings:
 # ------------------------
@@ -38,10 +38,12 @@ def chunked_reader(file, chunk_size=None, start_position= -1,
     @param file: File to be read, e.g. returned by L{open<open>}.
     @type file: file object
     
-    @keyword chunk_size: Read in this sized chunks.
+    @keyword chunk_size: Read in this sized chunks, C{None} defaults to 
+        L{DEFAULT_CHUNK_SIZE}.
     @type chunk_size: int
     
-    @keyword start_position: Start position of the chunked reading.
+    @keyword start_position: Start position of the chunked reading, C{-1} means
+        that the file is not being seeked to new position.
     @type start_position: int
     
     @keyword max_chunks: Maximum amount of chunks, C{-1} means I{infinity}.

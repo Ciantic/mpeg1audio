@@ -1,4 +1,4 @@
-"""VBRI (Fraunhofer Encoder) Header parsing package."""
+"""VBRI (Fraunhofer Encoder) Header related parsing."""
 
 # Pylint disable settings:
 # ------------------------
@@ -17,9 +17,9 @@ import struct
 class VBRI(VBRHeader):
     """Fraunhofer Encoder VBRI Header.
     
-    This header is only used by MPEG audio files encoded with the Fraunhofer 
-    Encoder as far as I know. It is different from the XING header. You find it 
-    exactly 32 bytes after the end of the first MPEG audio header in the file.
+    This header is only used by MPEG audio files encoded with the Fraunhofer
+    Encoder. It is different from the XING header. You find it exactly 32 bytes
+    after the end of the first MPEG audio header in the file.
     
     """
     def __init__(self):

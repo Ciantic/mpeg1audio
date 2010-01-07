@@ -135,19 +135,18 @@ def get_layer(bits):
         raise MPEGHeaderException('Unknown Layer version')
     
 def get_bitrate(mpeg_version, layer, bitrate_bits):
-    """ Get bitrate by mpeg version, layer_bitsbitrate_bitstrate bits index.
+    """ Get bitrate from given header data.
     
-    @param mpeg_version: Version of the MPEG, as returned by 
-        L{get_mpeg_version}
+    @param mpeg_version: Version of the MPEG, as returned by L{get_mpeg_version}
     @type mpeg_version: string
     
     @param layer: Layer of the MPEG as returned by L{get_layer}.
     @type layer: string
     
-    @param bitrate_bits: Four bits in MPEG header.
+    @param bitrate_bits: Four bitrate related bits in MPEG header.
     @type bitrate_bits: int
     
-    @return: Bitrate in kilobits per second.
+    @return: Bitrate in I{kilobits} per second.
     @rtype: int
     
     @raise mpegmeta.MPEGHeaderException: Raised when bitrate cannot be
@@ -327,7 +326,7 @@ def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     @param bitrate: Bitrate in kilobits per second.
     @type bitrate: int
     
-    @param padding_size: Size of header padding. 1 or 0.
+    @param padding_size: Size of header padding. Always either C{1} or C{0}.
     @type padding_size: int
     
     @return: Frame size in bytes.
@@ -356,7 +355,7 @@ def get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
     @param mpeg_size: Size of MPEG in bytes.
     @type mpeg_size: number
     
-    @param sample_count: Count of samples, greater than C{0}.
+    @param sample_count: Count of samples.
     @type sample_count: number
 
     @param sample_rate: Sample rate in Hz.
@@ -394,7 +393,7 @@ def get_duration_from_sample_count(sample_count, sample_rate):
     @param sample_rate: Sample rate in Hz.
     @type sample_rate: int
     
-    @return: Duration of MPEG, with second accuracy.
+    @return: Duration of MPEG, accuracy in seconds.
     @rtype: datetime.timedelta
     
     """
@@ -427,7 +426,7 @@ def get_vbr_frame_size(mpeg_size, frame_count):
     @param mpeg_size: Size of MPEG in bytes.
     @type mpeg_size: int
     
-    @param frame_count: Count of frames in MPEG, must be bigger than C{0}.
+    @param frame_count: Count of frames in MPEG.
     @type frame_count: int
     
     @return: Average frame size.
