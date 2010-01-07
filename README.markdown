@@ -1,5 +1,5 @@
 mpegmeta
---------
+========
 
 Pure Python MPEG related meta information retrieval package `mpegmeta`.
 
