@@ -13,7 +13,7 @@ license.
 
 **Note**: This is not meant to retrieve ID3v1 or ID3v2 tags. They are not part
 of MPEG Audio Layer I,II,III. If you are interested on ID-tags, I recommend 
-[pytagger](http://www.liquidx.net/pytagger/).
+[pytagger](http://code.google.com/p/liquidx/wiki/pytagger).
 
 ## For users of this package
 
