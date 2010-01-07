@@ -6,7 +6,7 @@ from distutils.core import setup, Extension
 
 setup(
     name="mp3meta",
-    version="0.5.1",
+    version="0.5.2",
     author="Jari Pennanen",
     author_email="jari.pennanen@gmail.com",
     url="http://github.com/Ciantic/mp3meta/",

@@ -1,7 +1,7 @@
 mp3meta
 ========
 
-Pure Python MPEG related meta information retrieval package `mp3meta`.
+Pure Python MPEG-1 Audio related meta information retrieval package `mp3meta`.
 
  * [GitHub repository of `mp3meta`](http://github.com/Ciantic/mp3meta.git)
 
@@ -35,11 +35,11 @@ command.
 
     >>> import mp3meta
     >>> try:
-    ...     mpeg = mp3meta.MPEG(open('data/song.mp3', 'rb'))
+    ...     mp3 = mp3meta.MPEGAudio(open('data/song.mp3', 'rb'))
     ... except mp3meta.MPEGHeaderException:
     ...     pass
     ... else:
-    ...     print mpeg.duration
+    ...     print mp3.duration
     0:03:12
     
 ## For developers of this package

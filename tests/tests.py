@@ -1,7 +1,7 @@
 """mp3meta - package tests"""
 
 from datetime import timedelta
-from mp3meta import MPEG, MPEGFrame
+from mp3meta import MPEGAudio, MPEGAudioFrame
 from mp3meta import utils
 import mp3meta
 import os
@@ -11,7 +11,7 @@ import doctest
 class MPEGSong2Tests(unittest.TestCase):
     """Simple CBR song 2 tests."""
     def setUp(self):
-        self.mpeg = MPEG(file=open('data/song2.mp3', 'rb'))
+        self.mpeg = MPEGAudio(file=open('data/song2.mp3', 'rb'))
         
     def testFrameCount(self):
         """CBR (2) frame count"""
@@ -22,7 +22,7 @@ class MPEGSong2Tests(unittest.TestCase):
 class MPEGSong3Tests(unittest.TestCase):
     """Simple CBR song 3 tests."""
     def setUp(self):
-        self.mpeg = MPEG(file=open('data/song3.mp3', 'rb'))
+        self.mpeg = MPEGAudio(file=open('data/song3.mp3', 'rb'))
         
     def testFrameCount(self):
         """CBR (3) frame count"""
@@ -46,7 +46,7 @@ class MPEGSong3Tests(unittest.TestCase):
 class MPEGTests(unittest.TestCase):
     """Simple CBR MPEG tests."""
     def setUp(self):
-        self.mpeg = MPEG(file=open('data/song.mp3', 'rb'))
+        self.mpeg = MPEGAudio(file=open('data/song.mp3', 'rb'))
         
     def testPositions(self):
         """CBR frame positions"""
@@ -112,7 +112,7 @@ class MPEGTests(unittest.TestCase):
 class VBRXingTests(unittest.TestCase):
     """VBR Xing header tests."""
     def setUp(self):
-        self.mpeg = MPEG(file=open('data/vbr_xing.mp3', 'rb'))
+        self.mpeg = MPEGAudio(file=open('data/vbr_xing.mp3', 'rb'))
         
     def testIsVBR(self):
         """VBR Xing is VBR?"""
@@ -160,7 +160,7 @@ class VBRXingTests(unittest.TestCase):
 class VBRFraunhoferTests(unittest.TestCase):
     """VBR Fraunhofer Encoder header tests."""
     def setUp(self):
-        self.mpeg = MPEG(file=open('data/vbr_fraunhofer.mp3', 'rb'))
+        self.mpeg = MPEGAudio(file=open('data/vbr_fraunhofer.mp3', 'rb'))
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
         
@@ -209,7 +209,7 @@ class VBRFraunhoferTests(unittest.TestCase):
 class VBRHeaderlessTests(unittest.TestCase):
     """VBR headerless tests."""
     def setUp(self):
-        self.mpeg = MPEG(file=open('data/vbr_empty.mp3', 'rb'))
+        self.mpeg = MPEGAudio(file=open('data/vbr_empty.mp3', 'rb'))
         
     def testIsVBR(self):
         """VBR headerless is VBR?"""
@@ -242,11 +242,11 @@ class ChunkedReadTests(unittest.TestCase):
     def testParseConsecutive(self):
         """Chunked parse consecutive"""
         chunks = utils.chunked_reader(self.file, chunk_size=4)
-        self.assertEqual([2283, 3119, 3955], [f.offset for f in utils.genlimit(MPEGFrame.parse_consecutive(header_offset=2283, chunks=chunks), 2, 3)])
+        self.assertEqual([2283, 3119, 3955], [f.offset for f in utils.genlimit(MPEGAudioFrame.parse_consecutive(header_offset=2283, chunks=chunks), 2, 3)])
         
     def testFindAndParse(self):
         """Chunked find and parse"""
-        self.assertEqual([2283, 3119, 3955], [f.offset for f in list(MPEGFrame.find_and_parse(self.file, max_frames=3, chunk_size=4, begin_frame_search=2273))])
+        self.assertEqual([2283, 3119, 3955], [f.offset for f in list(MPEGAudioFrame.find_and_parse(self.file, max_frames=3, chunk_size=4, begin_frame_search=2273))])
 
 class DocTests(unittest.TestCase):
     """Doc tests."""
