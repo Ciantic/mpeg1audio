@@ -1,5 +1,5 @@
 mpegmeta
-========
+--------
 
 Pure Python MPEG related meta information retrieval package `mpegmeta`.
 
@@ -11,8 +11,7 @@ This was done because other packages seemed to be licensed under GPL, this one
 is licensed under LGPL. License might be changed in future to MIT License / BSD 
 license.
 
-Documentation
--------------
+### Documentation
 
 Documentation can be found under `docs` -directory, they are included only
 in releases. Other releases, such as GitHub repository does not include HTML
@@ -20,8 +19,7 @@ generated documents. I'm trying to create automated way to generate EpyDoc
 HTML directly from repository automatically, and put that some place... But 
 until that is implemented, there will be no documentation available online.
 
-Installation
-------------
+### Installation
 
 This package uses `distutils` and is easily installed using that:
 
@@ -31,8 +29,7 @@ Under Windows you can start the command prompt with administrator rights (by
 right clicking `cmd.exe` and using "Run as administrator") then run the above 
 command.
 
-Usage example
--------------
+### Usage example
 
     >>> import mpegmeta
     >>> try:
