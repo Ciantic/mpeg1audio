@@ -42,7 +42,7 @@ class MPEGSong3Tests(unittest.TestCase):
         self.assertEqual(self.mpeg.size, 5925826)
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
-        
+
 class MPEGTests(unittest.TestCase):
     """Simple CBR MPEG tests."""
     def setUp(self):
@@ -108,7 +108,7 @@ class MPEGTests(unittest.TestCase):
         self.assertEqual(self.mpeg.sample_count, 8467823)
         self.assertEqual(self.mpeg.duration.seconds, 192)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
-        
+
 class VBRXingTests(unittest.TestCase):
     """VBR Xing header tests."""
     def setUp(self):
@@ -156,7 +156,7 @@ class VBRXingTests(unittest.TestCase):
         self.assertEqual(self.mpeg.xing.offset, 4132)
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
-        
+
 class VBRFraunhoferTests(unittest.TestCase):
     """VBR Fraunhofer Encoder header tests."""
     def setUp(self):
@@ -205,7 +205,7 @@ class VBRFraunhoferTests(unittest.TestCase):
         self.assertEqual(self.mpeg.duration, timedelta(seconds=210))
         self.assertEqual(self.mpeg.frames._has_parsed_all, False)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
-        
+
 class VBRHeaderlessTests(unittest.TestCase):
     """VBR headerless tests."""
     def setUp(self):
@@ -234,7 +234,7 @@ class VBRHeaderlessTests(unittest.TestCase):
         self.assertEqual(self.mpeg.duration, timedelta(seconds=210))
         self.assertEqual(self.mpeg.frames._has_parsed_all, True)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
-        
+
 class ChunkedReadTests(unittest.TestCase):
     def setUp(self):
         self.file = open('data/song.mp3', 'rb')
@@ -247,7 +247,6 @@ class ChunkedReadTests(unittest.TestCase):
     def testFindAndParse(self):
         """Chunked find and parse"""
         self.assertEqual([2283, 3119, 3955], [f.offset for f in list(MPEGFrame.find_and_parse(self.file, max_frames=3, chunk_size=4, begin_frame_search=2273))])
-        
 
 class DocTests(unittest.TestCase):
     """Doc tests."""
