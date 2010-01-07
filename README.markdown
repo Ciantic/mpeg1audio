@@ -1,6 +1,6 @@
-Pure Python MPEG related meta information retrieval package "mpegmeta".
+Pure Python MPEG related meta information retrieval package `mpegmeta`.
 
- * [GitHub repository](http://github.com/Ciantic/mpegmeta.git)
+ * [GitHub repository of `mpegmeta`](http://github.com/Ciantic/mpegmeta.git)
 
 Capable of retrieving duration (also duration of VBR MP3 files, using XING and 
 VBRI headers and parsing all frames), bitrate, average bitrate, sample count... 
