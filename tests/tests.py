@@ -248,17 +248,13 @@ class ChunkedReadTests(unittest.TestCase):
         """Chunked find and parse"""
         self.assertEqual([2283, 3119, 3955], [f.offset for f in list(MPEGFrame.find_and_parse(self.file, max_frames=3, chunk_size=4, begin_frame_search=2273))])
         
-if __name__ == "__main__":
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(MPEGTests))    
-    suite.addTest(unittest.makeSuite(MPEGSong2Tests))    
-    suite.addTest(unittest.makeSuite(MPEGSong3Tests))    
-    suite.addTest(unittest.makeSuite(VBRXingTests))
-    suite.addTest(unittest.makeSuite(VBRFraunhoferTests))
-    suite.addTest(unittest.makeSuite(VBRHeaderlessTests))
-    suite.addTest(unittest.makeSuite(VBRHeaderless2Tests))
-    suite.addTest(unittest.makeSuite(ChunkedReadTests))
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    
-    # Doc tests
-    doctest.testmod(mpegmeta)
+
+class DocTests(unittest.TestCase):
+    """Doc tests."""
+    def testMpegMeta(self):
+        """Doc test mpegmeta"""
+        doctest.testmod(mpegmeta, raise_on_error=True)
+        
+    def testMpegMetaUtils(self):
+        """Doc test mpegmeta.utils"""
+        doctest.testmod(mpegmeta.utils, raise_on_error=True)

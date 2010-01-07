@@ -37,7 +37,7 @@ command.
     >>> try:
     ...     mpeg = mpegmeta.MPEG(open('data/song.mp3', 'rb'))
     ... except mpegmeta.MPEGHeaderException:
-    ...    pass
+    ...     pass
     ... else:
     ...     print mpeg.duration
     0:03:12

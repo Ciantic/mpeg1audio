@@ -20,11 +20,11 @@ Simple example:
 
     >>> import mpegmeta
     >>> try:
-    ...     mpeg = mpegmeta.MPEG(open('data/song.mp3', 'rb'))
+    ...    mpeg = mpegmeta.MPEG(open('data/song.mp3', 'rb'))
     ... except mpegmeta.MPEGHeaderException:
     ...    pass
     ... else:
-    ...     print mpeg.duration
+    ...    print mpeg.duration
     0:03:12
 
 Lazy parsing
