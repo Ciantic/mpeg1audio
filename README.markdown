@@ -7,13 +7,12 @@ Pure Python MPEG-1 Audio related meta information retrieval package
  * [GitHub repository of `mpeg1audio`](http://github.com/Ciantic/mpeg1audio.git)
 
 Capable of retrieving duration (also duration of VBR MP3 files, using XING and 
-VBRI headers and parsing all frames), bitrate, average bitrate, sample count... 
-This was done because other packages seemed to be licensed under GPL, this one 
-is licensed under LGPL. License might be changed in future to MIT License / BSD 
-license.
+VBRI headers and parsing all frames), bitrate, average bitrate, sample count, 
+etc. This was done because other packages seemed to be licensed under GPL, this 
+one is licensed under *more permissive* FreeBSD License, see `COPYING`.
 
 **Note**: This is not meant to retrieve ID3v1 or ID3v2 tags. They are not part
-of MPEG Audio Layer I, II, III. If you are interested on ID3-tags, I recommend 
+of MPEG Audio Layer I, II or III. If you are interested on ID3-tags, I recommend 
 [pytagger](http://code.google.com/p/liquidx/wiki/pytagger).
 
 ## For users of this package
