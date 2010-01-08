@@ -12,7 +12,7 @@ is licensed under LGPL. License might be changed in future to MIT License / BSD
 license.
 
 **Note**: This is not meant to retrieve ID3v1 or ID3v2 tags. They are not part
-of MPEG Audio Layer I,II,III. If you are interested on ID-tags, I recommend 
+of MPEG Audio Layer I, II, III. If you are interested on ID3-tags, I recommend 
 [pytagger](http://code.google.com/p/liquidx/wiki/pytagger).
 
 ## For users of this package
