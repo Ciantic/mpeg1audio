@@ -1,9 +1,10 @@
-mp3meta
-========
+mpeg1audio
+==========
 
-Pure Python MPEG-1 Audio related meta information retrieval package `mp3meta`.
+Pure Python MPEG-1 Audio related meta information retrieval package 
+`mpeg1audio`.
 
- * [GitHub repository of `mp3meta`](http://github.com/Ciantic/mp3meta.git)
+ * [GitHub repository of `mpeg1audio`](http://github.com/Ciantic/mpeg1audio.git)
 
 Capable of retrieving duration (also duration of VBR MP3 files, using XING and 
 VBRI headers and parsing all frames), bitrate, average bitrate, sample count... 
@@ -37,10 +38,10 @@ command.
 
 ### Usage example
 
-    >>> import mp3meta
+    >>> import mpeg1audio
     >>> try:
-    ...    mp3 = mp3meta.MPEGAudio(open('data/song.mp3', 'rb'))
-    ... except mp3meta.MPEGAudioHeaderException:
+    ...    mp3 = mpeg1audio.MPEGAudio(open('data/song.mp3', 'rb'))
+    ... except mpeg1audio.MPEGAudioHeaderException:
     ...    pass
     ... else:
     ...    print mp3.duration
@@ -61,11 +62,12 @@ and Free bitrate -MP3 files.
 This project uses PyDev and Eclipse, and for this reason there are `.project` 
 and `.pydevproject` files. For documentation there is EpyDoc launch
 configuration that can generate documentation from within Eclipse, see
-`docs/EpyDoc for mp3meta.launch`. Currently the launch configuration has one
+`docs/EpyDoc for mpeg1audio.launch`. Currently the launch configuration has one
 hard-coded file path, so it is wise to edit this configuration before using it.
 
 There is also launch configuration for unit testing `tests/Tests for 
-mp3meta.launch`, it seems to be dependant on naming of `mp3meta` in workspace. 
+mpeg1audio.launch`, it seems to be dependant on naming of `mpeg1audio` in 
+workspace. 
 
 ### pylint
 

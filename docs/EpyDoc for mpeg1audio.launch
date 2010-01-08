@@ -3,9 +3,9 @@
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="C:\Program Files (x86)\Python26\Scripts\epydoc.py"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_OTHER_WORKING_DIRECTORY" value="${project_loc:mp3meta}\docs\"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_OTHER_WORKING_DIRECTORY" value="${project_loc:mpeg1audio}\docs\"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-v --debug ..\src\*"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${project_loc:mp3meta}\docs\"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${project_loc:mpeg1audio}\docs\"/>
 <stringAttribute key="org.python.pydev.debug.ATTR_INTERPRETER" value="__default"/>
-<stringAttribute key="org.python.pydev.debug.ATTR_PROJECT" value="mp3meta"/>
+<stringAttribute key="org.python.pydev.debug.ATTR_PROJECT" value="mpeg1audio"/>
 </launchConfiguration>

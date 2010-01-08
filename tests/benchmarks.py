@@ -1,11 +1,11 @@
-from mp3meta import MPEG
-import mp3meta
+from mpeg1audio import MPEG
+import mpeg1audio
 
 def benchmark_chunk_size(size, parsing_method):
     if parsing_method == 'parse_all':
-        mp3meta.PARSE_ALL_CHUNK_SIZE = size
+        mpeg1audio.PARSE_ALL_CHUNK_SIZE = size
     else:
-        mp3meta.utils.DEFAULT_CHUNK_SIZE = size
+        mpeg1audio.utils.DEFAULT_CHUNK_SIZE = size
     
     # TODO: BENCHMARKS: This is most likely highly biased to use only one file:
     mpeg = MPEG(file=open('data/song.mp3', 'rb'))

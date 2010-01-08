@@ -1,10 +1,10 @@
-"""mp3meta - package tests"""
+"""mpeg1audio - package tests"""
 
 from datetime import timedelta
-from mp3meta import MPEGAudio, MPEGAudioFrame
-from mp3meta import utils
-from mp3meta.headers import MPEGAudioHeaderException
-import mp3meta
+from mpeg1audio import MPEGAudio, MPEGAudioFrame
+from mpeg1audio import utils
+from mpeg1audio.headers import MPEGAudioHeaderException
+import mpeg1audio
 import os
 import unittest
 import doctest
@@ -256,10 +256,10 @@ class IncorrectFile(unittest.TestCase):
 
 class DocTests(unittest.TestCase):
     """Doc tests."""
-    def testmp3meta(self):
-        """Doc test mp3meta"""
-        doctest.testmod(mp3meta, raise_on_error=True)
+    def testmpeg1audio(self):
+        """Doc test mpeg1audio"""
+        doctest.testmod(mpeg1audio, raise_on_error=True)
         
-    def testmp3metaUtils(self):
-        """Doc test mp3meta.utils"""
-        doctest.testmod(mp3meta.utils, raise_on_error=True)
+    def testmpeg1audioUtils(self):
+        """Doc test mpeg1audio.utils"""
+        doctest.testmod(mpeg1audio.utils, raise_on_error=True)

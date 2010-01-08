@@ -87,8 +87,8 @@ def check_sync_bits(bits):
     @param bits: bits to check for sync bits.
     @type bits: int
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised if bits does not contain sync 
-        bits.
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised if bits does not contain
+        sync bits.
     
     """
     if (bits & 2047) != 2047:
@@ -106,7 +106,8 @@ def get_mpeg_version(bits):
     @todo: Ponder about the usefulness of this being string. Same with
         L{get_layer}.
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised when layer cannot be determined.
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised when layer cannot be
+        determined.
     
     """
     
@@ -124,7 +125,8 @@ def get_layer(bits):
     @return: MPEG Layer, one of the following values: C{'1', '2', '3'}.
     @rtype: string
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised when layer cannot be determined.
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised when layer cannot be
+        determined.
     
     """
 
@@ -149,7 +151,7 @@ def get_bitrate(mpeg_version, layer, bitrate_bits):
     @return: Bitrate in I{kilobits} per second.
     @rtype: int
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised when bitrate cannot be
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised when bitrate cannot be
         determined.
     
     """
@@ -178,8 +180,8 @@ def get_sample_rate(mpeg_version, bits):
     @return: Sample rate in Hz
     @rtype: int
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised when sample rate cannot be
-        determined.
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised when sample rate cannot
+        be determined.
     
     """
 
@@ -198,7 +200,7 @@ def get_channel_mode(bits):
         C{"dual channel"}, C{"mono"}. 
     @rtype: string
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised if channel mode cannot be 
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode cannot be 
         determined.
     """
     
@@ -223,8 +225,8 @@ def get_channel_mode_ext(layer, bits):
     @return: Channel extension mode. One of the following values: C{"4-31", 
         "8-31", "12-31", "16-31", "", "IS", "MS", "IS+MS"}
        
-    @raise mp3meta.MPEGAudioHeaderException: Raised if channel mode extension cannot 
-        be determined.
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode extension
+        cannot be determined.
         
     """
 
@@ -244,7 +246,7 @@ def get_emphasis(bits):
         "reserved", "CCIT J.17"}
     @rtype: string 
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised when emphasis cannot be
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised when emphasis cannot be
         determined.
     
     """
@@ -259,10 +261,7 @@ def get_bytes(header_offset, chunk):
     """Unpacks MPEG Frame header bytes from chunk of data.
     
     Value can then be used to parse and verify the bits.
-    
-    @see: L{MPEGFrame.parse}
-    @see: L{MPEGFrame.find_and_parse}
-    
+        
     @param header_offset: Position I{within a chunk} where to look for header 
         bytes.
     @type header_offset: int
@@ -270,12 +269,15 @@ def get_bytes(header_offset, chunk):
     @param chunk: Chunk of data where to get header bytes.
     @type chunk: string
     
-    @return: Header bytes. Used by L{MPEGFrame.parse}.
+    @return: Header bytes. Used by L{MPEGAudioFrame.parse}.
     @rtype: int
     
-    @raise mp3meta.MPEGAudioHeaderEOFException: Raised when end of chunk was 
+    @raise mpeg1audio.MPEGAudioHeaderEOFException: Raised when end of chunk was 
         reached.
-    
+        
+    @see: L{MPEGAudioFrame.parse}
+    @see: L{MPEGAudioFrame.find_and_parse}
+
     """
     # Get first four bytes
     header = chunk[header_offset:header_offset + 4]
@@ -304,8 +306,8 @@ def get_samples_per_frame(mpeg_version, layer):
     @rtype: int
     @return: Samples per frame.
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised if samples per frame cannot be 
-        determined.
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised if samples per frame
+        cannot be determined.
     
     """
     try:
@@ -337,7 +339,7 @@ def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     @return: Frame size in bytes.
     @rtype: int
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised when frame size cannot be 
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised when frame size cannot be 
         determined.
     
     """
@@ -413,7 +415,7 @@ def get_duration_from_size_bitrate(mpeg_size, bitrate):
     @param bitrate: Bitrate in kilobits per second, for example 192.
     @type bitrate: int
     
-    @raise mp3meta.MPEGAudioHeaderException: Raised if duration cannot be 
+    @raise mpeg1audio.MPEGAudioHeaderException: Raised if duration cannot be 
         determined.
     
     @return: Duration of the MPEG, with second accuracy.

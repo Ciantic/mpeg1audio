@@ -1,5 +1,5 @@
 """
-mp3meta
+mpeg1audio
 
 Python package which is intended to gather all kinds of MPEGAudio related meta 
 information from file. Such as duration of MPEGAudio file, average bitrate for 
@@ -18,10 +18,10 @@ Usage examples
 Simple example:
 ---------------
 
-    >>> import mp3meta
+    >>> import mpeg1audio
     >>> try:
-    ...    mp3 = mp3meta.MPEGAudio(open('data/song.mp3', 'rb'))
-    ... except mp3meta.MPEGAudioHeaderException:
+    ...    mp3 = mpeg1audio.MPEGAudio(open('data/song.mp3', 'rb'))
+    ... except mpeg1audio.MPEGAudioHeaderException:
     ...    pass
     ... else:
     ...    print mp3.duration
@@ -30,9 +30,9 @@ Simple example:
 Lazy parsing
 ============
 
-Notable feature of mp3meta is the fact that it L{tries to parse
-lazily<mp3meta.MPEGAudio>}. It doesn't parse all frames, or ending unless really
-needed.
+Notable feature of mpeg1audio is the fact that it L{tries to parse
+lazily<mpeg1audio.MPEGAudio>}. It doesn't parse all frames, or ending unless
+really needed.
 
 @todo: Free bitrate, this should be simple to implement, though I haven't yet
     found any free bitrate files which to test against.
@@ -71,10 +71,10 @@ needed.
 # reStructuredText?
 
 from datetime import timedelta
+from mpeg1audio import headers
+from mpeg1audio import utils
 from headers import MPEGAudioHeaderEOFException, MPEGAudioHeaderException
-import headers
 import math
-import utils
 import struct
 
 __all__ = ['MPEGAudioFrameBase', 'MPEGFrameIteratoMPEGAudioFrameFrame', 
@@ -296,7 +296,7 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
         @type chunks: generator, or list
         
         @return: Generator yielding MPEGAudio frames.
-        @rtype: generator of L{MPEGFrames<mp3meta.MPEGAudioFrame>}
+        @rtype: generator of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
         
         @see: L{utils.chunked_reader}
         
@@ -360,8 +360,8 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
         @rtype: L{MPEGAudioFrame}
         @return: MPEGAudio Frame
         
-        @raise mp3meta.MPEGAudioHeaderException: Raised if MPEGAudio Frame cannot be 
-            parsed.
+        @raise mpeg1audio.MPEGAudioHeaderException: Raised if MPEGAudio Frame
+            cannot be parsed.
             
         """
         # TODO: LOW: CRC, verify and parse.
@@ -417,7 +417,7 @@ class MPEGFrameIterator(object):
         """Create MPEGAudio frame iterator.
         
         @param mpeg: MPEGAudio Which frames are to be iterated over.
-        @type mpeg: L{MPEGAudio<mp3meta.MPEGAudio>}
+        @type mpeg: L{MPEGAudio<mpeg1audio.MPEGAudio>}
         
         @param begin_frames: First frames of MPEGAudio.
         @type begin_frames: function giving list of L{MPEGAudioFrame}
@@ -428,17 +428,17 @@ class MPEGFrameIterator(object):
         """
         self.mpeg = mpeg
         """MPEGAudio which frames are iterated.
-        @type: L{MPEGAudio<mp3meta.MPEGAudio>}
+        @type: L{MPEGAudio<mpeg1audio.MPEGAudio>}
         """
         
         self._begin_frames = begin_frames
         """Begin frames.
-        @type: list of L{MPEGAudioFrame<mp3meta.MPEGAudioFrame>}
+        @type: list of L{MPEGAudioFrame<mpeg1audio.MPEGAudioFrame>}
         """
         
         self._end_frames = end_frames
         """End frames.
-        @type: list of L{MPEGAudioFrame<mp3meta.MPEGAudioFrame>}, or None
+        @type: list of L{MPEGAudioFrame<mpeg1audio.MPEGAudioFrame>}, or None
         """
         
         self._has_parsed_all = False
@@ -529,7 +529,7 @@ class MPEGAudio(MPEGAudioFrameBase):
     frames. 
     
     MPEGAudio object is lazy
-    ===================
+    ========================
     
     Laziness works when ...
     -----------------------
@@ -538,9 +538,9 @@ class MPEGAudio(MPEGAudioFrameBase):
     ending of the file. Being lazy for MPEGAudio object means that it has passed
     at least:
     
-     1. L{is mpeg test <mp3meta.MPEGAudio._is_mpeg_test>} returned without
+     1. L{is mpeg test <mpeg1audio.MPEGAudio._is_mpeg_test>} returned without
         exception. 
-     2. L{beginning parsing <mp3meta.MPEGAudio._parse_beginning>} is
+     2. L{beginning parsing <mpeg1audio.MPEGAudio._parse_beginning>} is
         done.
      
     Normal initialization of MPEGAudio object does these things, user of this
@@ -581,8 +581,8 @@ class MPEGAudio(MPEGAudioFrameBase):
     On the other hand, if the user doesn't want to parse all frames, and is
     satisfied for C{None} for the cases where it cannot be calculated without
     full parsing, the API gives you possibility to use appropriate getters e.g.
-    L{_get_duration <mp3meta.MPEGAudio._get_duration>} with arguments to adjust
-    for the case.
+    L{_get_duration <mpeg1audio.MPEGAudio._get_duration>} with arguments to
+    adjust for the case.
     
     @note: This does not provide any kind of updating or playing the mpeg audio 
         files, only reading out meta data.
@@ -623,7 +623,8 @@ class MPEGAudio(MPEGAudioFrameBase):
             fast.
         @type mpeg_test: bool
         
-        @raise mp3meta.MPEGAudioHeaderException: Raised if header cannot be found.
+        @raise mpeg1audio.MPEGAudioHeaderException: Raised if header cannot be
+            found.
         
         """
         super(MPEGAudio, self).__init__()
@@ -645,17 +646,17 @@ class MPEGAudio(MPEGAudioFrameBase):
         
         self.xing = None
         """XING Header, if any.
-        @type: L{XING<mp3meta.XING>}, or None
+        @type: L{XING<mpeg1audio.XING>}, or None
         """
         
         self.vbri = None
         """VBRI Header, if any.
-        @type: L{VBRI<mp3meta.VBRI>}, or None
+        @type: L{VBRI<mpeg1audio.VBRI>}, or None
         """
         
         self.frames = None
         """All MPEGAudio frames.
-        @type: iterable of L{MPEGFrames<mp3meta.MPEGAudioFrame>}
+        @type: iterable of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
         """
         
         self._frame_count = None
@@ -914,8 +915,8 @@ class MPEGAudio(MPEGAudioFrameBase):
     
     def _parse_xing(self):
         """Tries to parse and set XING from first mpeg frame.
-        @see: L{MPEGAudio.xing<mp3meta.MPEGAudio.xing>}
-        @see: L{XING<mp3meta.XING>}
+        @see: L{MPEGAudio.xing<mpeg1audio.MPEGAudio.xing>}
+        @see: L{XING<mpeg1audio.XING>}
         
         """
         from xing import XING, XINGHeaderException
@@ -928,8 +929,8 @@ class MPEGAudio(MPEGAudioFrameBase):
             
     def _parse_vbri(self):
         """Tries to parse and set VBRI from first mpeg frame.
-        @see: L{MPEGAudio.vbri<mp3meta.MPEGAudio.vbri>}
-        @see: L{VBRI<mp3meta.VBRI>}
+        @see: L{MPEGAudio.vbri<mpeg1audio.MPEGAudio.vbri>}
+        @see: L{VBRI<mpeg1audio.VBRI>}
         
         """
         from vbri import VBRI, VBRIHeaderException
@@ -947,7 +948,7 @@ class MPEGAudio(MPEGAudioFrameBase):
         Validates that from middle of the file we can find three valid 
         consecutive MPEGAudio frames. 
         
-        @raise mp3meta.MPEGAudioHeaderException: Raised if MPEGAudio frames 
+        @raise mpeg1audio.MPEGAudioHeaderException: Raised if MPEGAudio frames 
             cannot be found.
             
         @return: List of test MPEGAudio frames.
@@ -992,12 +993,12 @@ class MPEGAudio(MPEGAudioFrameBase):
         MPEGAudio file with good probability, only if the file is VBR this fails.
         
         @param first_mpegframe: First MPEGAudio frame of the file.
-        @type first_mpegframe: L{MPEGAudioFrame<mp3meta.MPEGAudioFrame>}
+        @type first_mpegframe: L{MPEGAudioFrame<mpeg1audio.MPEGAudioFrame>}
         
         @param mpegframes: List of MPEGAudio frames, order and position does not 
-            matter, only thing matters are the fact they are from same MPEGAudio. 
-            These are used determine the VBR status of the file. 
-        @type mpegframes: list of L{MPEGFrames<mp3meta.MPEGAudioFrame>}
+            matter, only thing matters are the fact they are from same
+            MPEGAudio. These are used determine the VBR status of the file.
+        @type mpegframes: list of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
         
         """
         # Copy values of MPEGAudio Frame to MPEGAudio, where applicable.
@@ -1036,8 +1037,8 @@ class MPEGAudio(MPEGAudioFrameBase):
             - C{frame_count}
             - C{bitrate}
             
-        Essentially all properties, and variables of MPEGAudio should be as accurate
-        as possible after running this.
+        Essentially all properties, and variables of MPEGAudio should be as
+        accurate as possible after running this.
             
         @param force: Force re-parsing all frames. Defaults to C{False}.
         @type force: bool
@@ -1061,10 +1062,11 @@ class MPEGAudio(MPEGAudioFrameBase):
         @type max_frames: int
         
         @return: List of MPEGAudio frames.
-        @rtype: list of L{MPEGFrames<mp3meta.MPEGAudioFrame>}
+        @rtype: list of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
         
-        @raise mp3meta.MPEGAudioHeaderException: Raised if no frames was found. This
-            should not happen if L{MPEGAudio._is_mpeg_test} has passed.
+        @raise mpeg1audio.MPEGAudioHeaderException: Raised if no frames was
+            found. This should not happen if L{MPEGAudio._is_mpeg_test} has
+            passed.
             
         """
         try:
@@ -1098,11 +1100,11 @@ class MPEGAudio(MPEGAudioFrameBase):
         
         @note: This might take a long time for files that does not have frames.
         @return: List of MPEGAudio frames, amount of items is variable.
-        @rtype: list of L{MPEGFrames<mp3meta.MPEGAudioFrame>}
+        @rtype: list of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
         
-        @raise mp3meta.MPEGAudioHeaderEOFException: Raised if whole file does not
-            include any frames. This should not happen if L{MPEGAudio._is_mpeg_test}
-            has passed.
+        @raise mpeg1audio.MPEGAudioHeaderEOFException: Raised if whole file does
+            not include any frames. This should not happen if
+            L{MPEGAudio._is_mpeg_test} has passed.
         
         """
         # min_frames is always positive:
