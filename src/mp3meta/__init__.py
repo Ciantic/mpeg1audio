@@ -279,7 +279,8 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
                     return utils.genlimit(frames, lazily_after + 1, max_frames)
                 except ValueError:
                     pass
-        return []
+        
+        return iter([])
     
     @classmethod
     def parse_consecutive(cls, header_offset, chunks):
@@ -946,8 +947,8 @@ class MPEGAudio(MPEGAudioFrameBase):
         Validates that from middle of the file we can find three valid 
         consecutive MPEGAudio frames. 
         
-        @raise mp3meta.MPEGAudioHeaderException: Raised if MPEGAudio frames cannot be 
-            found.
+        @raise mp3meta.MPEGAudioHeaderException: Raised if MPEGAudio frames 
+            cannot be found.
             
         @return: List of test MPEGAudio frames.
         @rtype: list
@@ -972,12 +973,16 @@ class MPEGAudio(MPEGAudioFrameBase):
             test_position = self._begin_start_looking + \
                             int(0.5 * looking_length)
              
-        return MPEGAudioFrame.find_and_parse(file=self._file,
-                                        max_frames=3,
-                                        chunk_size=16384,
-                                        begin_frame_search=test_position,
-                                        lazily_after=2,
-                                        max_chunks=1)
+        try:
+            return utils.genmin(MPEGAudioFrame.find_and_parse(file=self._file,
+                                            max_frames=3,
+                                            chunk_size=16384,
+                                            begin_frame_search=test_position,
+                                            lazily_after=2,
+                                            max_chunks=1),
+                                3)
+        except ValueError:
+            raise MPEGAudioHeaderException("MPEG Test is not passed.")
                 
     def _set_mpeg_details(self, first_mpegframe, mpegframes):
         """Sets details of I{this} MPEGAudio from the given frames.

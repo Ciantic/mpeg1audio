@@ -3,6 +3,7 @@
 from datetime import timedelta
 from mp3meta import MPEGAudio, MPEGAudioFrame
 from mp3meta import utils
+from mp3meta.headers import MPEGAudioHeaderException
 import mp3meta
 import os
 import unittest
@@ -247,6 +248,11 @@ class ChunkedReadTests(unittest.TestCase):
     def testFindAndParse(self):
         """Chunked find and parse"""
         self.assertEqual([2283, 3119, 3955], [f.offset for f in list(MPEGAudioFrame.find_and_parse(self.file, max_frames=3, chunk_size=4, begin_frame_search=2273))])
+        
+class IncorrectFile(unittest.TestCase):
+    def testParse(self):
+        """Test parsing incorrect file."""
+        self.assertRaises(MPEGAudioHeaderException, MPEGAudio, file=open('data/incorrect.jpg', 'rb'))        
 
 class DocTests(unittest.TestCase):
     """Doc tests."""
