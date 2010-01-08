@@ -51,22 +51,22 @@ needed.
 # ------------------------
 # ToDos, DocStrings:
 # pylint: disable-msg=W0511,W0105 
- 
+#
 # Unused variable, argument:
 # pylint: disable-msg=W0612,W0613
-
+#
 # Re-define built-in:
 # pylint: disable-msg=W0622
-
+#
 # Protected member access: 
 # pylint: disable-msg=W0212
-
+#
 # Too many lines per module:
 # pylint: disable-msg=C0302
-
+#
 # Too many instance attributes, Too few public methods:
 # pylint: disable-msg=R0902,R0903
-
+#
 # TODO: LOW: I don't like the verboseness of EpyDoc syntax, maybe change to
 # reStructuredText?
 
@@ -982,7 +982,8 @@ class MPEGAudio(MPEGAudioFrameBase):
                                             max_chunks=1),
                                 3)
         except ValueError:
-            raise MPEGAudioHeaderException("MPEG Test is not passed.")
+            raise MPEGAudioHeaderException("MPEG Test is not passed, "
+                                           "file might not be MPEG?")
                 
     def _set_mpeg_details(self, first_mpegframe, mpegframes):
         """Sets details of I{this} MPEGAudio from the given frames.
