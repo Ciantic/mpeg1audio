@@ -10,9 +10,9 @@ setup(
     author="Jari Pennanen",
     author_email="jari.pennanen@gmail.com",
     url="http://github.com/Ciantic/mpeg1audio/",
-    description="Python MPEG Meta information retrieval package.",
-    long_description="Retrieves MPEG Meta information such as duration, sampling rate, bitrate, average bitrate (for VBR MP3) files, etc.",
-    license="LGPL",
+    description="Python MPEG-1 Audio information retrieval package.",
+    long_description="Retrieves MPEG-1 Audio meta information such as duration, sampling rate, bitrate, average bitrate (for VBR MP3) files, etc.",
+    license="FreeBSD",
     packages=["mpeg1audio"],
     package_dir={'mpeg1audio': 'src/mpeg1audio'}
 )
