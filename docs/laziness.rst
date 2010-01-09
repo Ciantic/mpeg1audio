@@ -27,12 +27,12 @@ all frames is out of question, you should use getters directly, they have
 option to prevent parsing all frames.
 
 By using properties we can ensure that all properties and instance variables
-returns I{meaningful value} instead of C{None}. To write this as a simple 
+returns *meaningful value* instead of ``None``. To write this as a simple 
 rule that lazy getters should follow:
 
- - I{All getters should return meaningful value with B{default arguments}}.
+ - *All getters should return meaningful value with **default arguments***.
  
-That is it! No errors should be raised, no C{None}'s should be given, just
+That is it! No errors should be raised, no ``None``'s should be given, just
 the meaningful value. If getter needs to parse to get the meaningful value,
 that is what it does. Currently there are only two major things that the
 MPEGAudio object does lazily, when really required:
@@ -44,12 +44,12 @@ For the end user of this API this is convinient, it might not care if the
 file is VBR, CBR, or what ever. For example if one cares only about the 
 duration of MPEGAudio: 
 
-With creating the MPEGAudio instance object I{we ensure} - did not yield
-parsing exception - that by running C{mpeg.duration} the user gets the
+With creating the MPEGAudio instance object *we ensure* - did not yield
+parsing exception - that by running ``mpeg.duration`` the user gets the
 duration, even if as worst case scenario it might require parsing all
 frames.
 
 On the other hand, if the user doesn't want to parse all frames, and is
-satisfied for C{None} for the cases where it cannot be calculated without
+satisfied for ``None`` for the cases where it cannot be calculated without
 full parsing, the API gives you possibility to use appropriate getters with 
 arguments to adjust for the case.
