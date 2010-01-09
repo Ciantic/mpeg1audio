@@ -21,7 +21,7 @@ of MPEG Audio Layer I, II or III. If you are interested on ID3-tags, I recommend
 
 Documentation can be found under `docs` -directory, they are included only
 in releases. Other releases, such as GitHub repository does not include HTML
-generated documents. I'm trying to create automated way to generate SphinxDoc
+generated documents. I'm trying to create automated way to generate Sphinx doc
 HTML directly from repository as new commits come in... But until that is 
 implemented, there will be *no documentation available online*.
 
