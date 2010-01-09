@@ -21,7 +21,7 @@ of MPEG Audio Layer I, II or III. If you are interested on ID3-tags, I recommend
 
 Documentation can be found under `docs` -directory, they are included only
 in releases. Other releases, such as GitHub repository does not include HTML
-generated documents. I'm trying to create automated way to generate EpyDoc
+generated documents. I'm trying to create automated way to generate SphinxDoc
 HTML directly from repository as new commits come in... But until that is 
 implemented, there will be *no documentation available online*.
 
@@ -59,9 +59,9 @@ and Free bitrate -MP3 files.
 ### PyDev and Eclipse
 
 This project uses PyDev and Eclipse, and for this reason there are `.project` 
-and `.pydevproject` files. For documentation there is EpyDoc launch
+and `.pydevproject` files. For documentation there is Sphinx doc launch
 configuration that can generate documentation from within Eclipse, see
-`docs/EpyDoc for mpeg1audio.launch`. Currently the launch configuration has one
+`docs/SphinxDoc mpeg1audio.launch`. Currently the launch configuration has one
 hard-coded file path, so it is wise to edit this configuration before using it.
 
 There is also launch configuration for unit testing `tests/Tests for 
