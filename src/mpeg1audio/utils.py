@@ -1,4 +1,7 @@
-"""Helpers used in package."""
+"""
+:mod:`mpeg1audio.utils`
+=======================
+"""
 
 # Pylint disable settings:
 # ------------------------
@@ -13,16 +16,17 @@
 
 DEFAULT_CHUNK_SIZE = 8192
 """Chunk size for chunked reader, if not given.
-@type: int"""
+
+:type: int"""
 
 def get_filesize(file):
     """Get file size from file object.
     
-    @param file: File object, returned e.g. by L{open<open>}.
-    @type file: file object
+    :param file: File object, returned e.g. by :func:`open`.
+    :type file: file object
     
-    @return: File size in bytes.
-    @rtype: int
+    :return: File size in bytes.
+    :rtype: int
     
     """
     offset = file.tell()
@@ -35,27 +39,27 @@ def chunked_reader(file, chunk_size=None, start_position= -1,
                     max_chunks= -1, reset_offset=True):
     """Reads file in chunks for performance in handling of big files.
     
-    @param file: File to be read, e.g. returned by L{open<open>}.
-    @type file: file object
+    :param file: File to be read, e.g. returned by :func:`open`.
+    :type file: file object
     
-    @keyword chunk_size: Read in this sized chunks, C{None} defaults to 
-        L{DEFAULT_CHUNK_SIZE}.
-    @type chunk_size: int
+    :param chunk_size: Read in this sized chunks, ``None`` defaults to 
+        :const:`DEFAULT_CHUNK_SIZE`.
+    :type chunk_size: int
     
-    @keyword start_position: Start position of the chunked reading, C{-1} means
+    :param start_position: Start position of the chunked reading, ``-1`` means
         that the file is not being seeked to new position.
-    @type start_position: int
+    :type start_position: int
     
-    @keyword max_chunks: Maximum amount of chunks, C{-1} means I{infinity}.
-    @type max_chunks: int
+    :param max_chunks: Maximum amount of chunks, ``-1`` means *infinity*.
+    :type max_chunks: int
     
-    @keyword reset_offset: Resets the offset of seeking between chunks. Used
+    :param reset_offset: Resets the offset of seeking between chunks. Used
         to correct the cursor position when file seeks / reads occurs inside 
         chunk iteration.
-    @type reset_offset: bool
+    :type reset_offset: bool
     
-    @return: Generator of file chunks as tuples of chunk offset and chunk.
-    @rtype: generator of (chunk_offset, chunk)
+    :return: Generator of file chunks as tuples of chunk offset and chunk.
+    :rtype: generator of (chunk_offset, chunk)
     
     """
     if start_position != -1:
@@ -83,14 +87,14 @@ def chunked_reader(file, chunk_size=None, start_position= -1,
 def find_all_overlapping(string, occurrence):
     """Find all overlapping occurrences.
     
-    @param string: String to be searched.
-    @type string: string
+    :param string: String to be searched.
+    :type string: string
     
-    @param occurrence: Occurrence to search.
-    @type occurrence: string
+    :param occurrence: Occurrence to search.
+    :type occurrence: string
     
-    @return: generator yielding I{positions of occurence}
-    @rtype: generator of int
+    :return: generator yielding *positions of occurence*
+    :rtype: generator of int
     
     """
     found = 0
@@ -109,23 +113,23 @@ def wrap_open_close(function, object, filename, mode='rb',
                     file_handle_name='_file'):
     """Wraps the objects file handle for execution of function.
     
-    @param function: Function to be executed during file handle wrap.
-    @type function: callable
+    :param function: Function to be executed during file handle wrap.
+    :type function: callable
     
-    @param object: Object having the file handle.
-    @type object: object
+    :param object: Object having the file handle.
+    :type object: object
     
-    @param filename: Filename opened.
-    @type filename: string
+    :param filename: Filename opened.
+    :type filename: string
     
-    @keyword mode: Opening mode.
-    @type mode: string
+    :param mode: Opening mode.
+    :type mode: string
     
-    @keyword file_handle_name: Name of the instance variable in object.
-    @type file_handle_name: string
+    :param file_handle_name: Name of the instance variable in object.
+    :type file_handle_name: string
     
-    @return: New function which being run acts as wrapped function call.
-    @rtype: function
+    :return: New function which being run acts as wrapped function call.
+    :rtype: function
     
     """
     file_handle = getattr(object, file_handle_name)
@@ -142,14 +146,14 @@ def wrap_open_close(function, object, filename, mode='rb',
 def join_iterators(iterable1, iterable2):
     """Joins list and generator.
     
-    @param iterable1: List to be appended.
-    @type iterable1: Generator
+    :param iterable1: List to be appended.
+    :type iterable1: Generator
     
-    @param iterable2: Generator to be appended.
-    @type iterable2: generator
+    :param iterable2: Generator to be appended.
+    :type iterable2: generator
     
-    @return: Generator yielding first iterable1, and then following iterable2.
-    @rtype: generator
+    :return: Generator yielding first iterable1, and then following iterable2.
+    :rtype: generator
     
     """
     for item1 in iterable1:
@@ -160,14 +164,6 @@ def join_iterators(iterable1, iterable2):
         
 def genmin(generator, min):
     """Ensures that generator has min amount of items left.
-    
-    @param generator: Generator to be ensured.
-    @type generator: generator
-    
-    @param min: Minimum amount of items in generator.
-    @type min: int
-    
-    @raise ValueError: Raised when minimum is not met.
     
         >>> def yrange(n): # Note that xrange doesn't work, requires next()
         ...     for i in range(n):
@@ -183,6 +179,14 @@ def genmin(generator, min):
         ValueError: Minimum amount not met.
         >>> 
         
+    :param generator: Generator to be ensured.
+    :type generator: generator
+    
+    :param min: Minimum amount of items in generator.
+    :type min: int
+    
+    :raise ValueError: Raised when minimum is not met.
+
     """
     cache = []
     for index in range(min): #@UnusedVariable
@@ -199,18 +203,18 @@ def genmax(generator, max):
     For example when you have generator that goes to infinity, you might want to
     instead only get 100 first instead.
     
-    @param generator: Generator
-    @type generator: generator
-
-    @param max: Maximum amount of items yields.
-    @type max: int
-    
-    @rtype: generator
-    @return: Generator limited by max.
-    
         >>> list(genmax(xrange(100), max=3))
         [0, 1, 2]
         
+    :param generator: Generator
+    :type generator: generator
+
+    :param max: Maximum amount of items yields.
+    :type max: int
+    
+    :rtype: generator
+    :return: Generator limited by max.
+
     """
     for index, item in enumerate(generator):
         yield item
@@ -218,19 +222,19 @@ def genmax(generator, max):
             return
         
 def genlimit(generator, min, max):
-    """Limit generator I{item count} between min and max.
+    """Limit generator *item count* between min and max.
     
-    @param generator: Generator
-    @type generator: generator
+    :param generator: Generator
+    :type generator: generator
 
-    @param min: Minimum amount of items in generator.
-    @type min: int, or None
+    :param min: Minimum amount of items in generator.
+    :type min: int, or None
     
-    @param max: Maximum amount of items.
-    @type max: int, or None
+    :param max: Maximum amount of items.
+    :type max: int, or None
     
-    @note: If both are C{None} this returns the same generator.
-    @raise ValueError: Raised when minimum is not met.
+    :note: If both are ``None`` this returns the same generator.
+    :raise ValueError: Raised when minimum is not met.
     
     """
     if (min is None) and (max is None):

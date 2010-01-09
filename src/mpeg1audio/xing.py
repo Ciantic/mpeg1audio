@@ -1,4 +1,10 @@
-"""XING Header related parsing."""
+"""
+:mod:`mpeg1audio.xing`
+======================
+
+XING VBR Header parsing module.
+
+"""
 
 # Pylint disable settings:
 # ------------------------
@@ -32,17 +38,17 @@ class XING(VBRHeader):
     def find_and_parse(cls, file, first_frame_offset):
         """Find and parse XING header in MPEG File.
         
-        @param file: File object.
-        @type file: file object
+        :param file: File object.
+        :type file: file object
         
-        @param first_frame_offset: Offset of first mpeg frame in file.
-        @type first_frame_offset: int
+        :param first_frame_offset: Offset of first mpeg frame in file.
+        :type first_frame_offset: int
         
-        @return: XING Header in given file.
-        @rtype: L{XING}
+        :return: XING Header in given file.
+        :rtype: :class:`XING`
         
-        @raise XINGHeaderException: Raised if XING Header cannot be 
-            parsed or found.
+        :raise XINGHeaderException: Raised if XING Header cannot be parsed or 
+            found.
             
         """
         file.seek(first_frame_offset)

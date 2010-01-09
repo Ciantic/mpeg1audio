@@ -1,22 +1,33 @@
 """
-mpeg1audio
+:mod:`mpeg1audio`
+================================
 
-Python package which is intended to gather all kinds of MPEGAudio related meta 
-information from file. Such as duration of MPEGAudio file, average bitrate for 
-variable bitrate (VBR) MPEGAudio files, etc.
+Python package which is intended to gather all kinds of MPEG-1 Audio related
+meta information from file. Such as duration of MPEGAudio file, average bitrate
+for variable bitrate (VBR) MPEGAudio files, etc.
 
 Most of the information about MPEGAudio Headers is from excellent article
-U{MPEGAudio Audio Frame Header By Konrad Windszus, in Code Project
-<http://www.codeproject.com/KB/audio-video/mpegaudioinfo.aspx#MPEGAudioFrame>}.
+`MPEGAudio Audio Frame Header By Konrad Windszus, in Code Project
+<http://www.codeproject.com/KB/audio-video/mpegaudioinfo.aspx#MPEGAudioFrame>`_.
 If you are solely interested on details of MPEGAudio headers that is a good
-place to start. Unit tests (C{tests/} -directory) are matched against the
+place to start. Unit tests (:file:`tests/` -directory) are matched against the
 MPEGAudioInfo.exe provided in that project.
 
-Usage examples
-==============
- 
-Simple example:
----------------
+Notable feature of mpeg1audio is the fact that it :doc:`tries to parse
+lazily</laziness>`. It doesn't parse all frames, or ending unless really needed.
+
+.. todo:: Free bitrate, this should be simple to implement, though I haven't yet
+    found any free bitrate files which to test against.
+
+.. todo:: Table of contents for VBR, this is not high on priority list since we
+    don't need to seek the MPEGAudio really.
+
+.. moduleauthor:: Jari Pennanen <jari.pennanen@gmail.com>
+.. license: FreeBSD License. 
+.. version: 0.5.2
+
+Usage example
+-------------
 
     >>> import mpeg1audio
     >>> try:
@@ -26,25 +37,33 @@ Simple example:
     ... else:
     ...    print mp3.duration
     0:03:12
+    
+Why the exception? It may seem unnecessary, but it has a purpose so that there
+cannot be *empty* MPEGAudio instances, those are more infuriating than the
+handling of exception.
 
-Lazy parsing
-============
+Members
+-------
 
-Notable feature of mpeg1audio is the fact that it L{tries to parse
-lazily<mpeg1audio.MPEGAudio>}. It doesn't parse all frames, or ending unless
-really needed.
+.. autoclass:: MPEGAudio
+    :members:
+    :inherited-members:
 
-@todo: Free bitrate, this should be simple to implement, though I haven't yet
-    found any free bitrate files which to test against.
+.. autoclass:: MPEGAudioFrame
+    :members:
+    :inherited-members:
+    
+Boilerplate members
+-------------------
 
-@todo: Table of contents for VBR, this is not high on priority list since we
-    don't need to seek the MPEGAudio really.
+.. autoclass:: MPEGAudioFrameBase
+    :members:
 
-@author: Jari Pennanen
-@copyright: Jari Pennanen, 2010.
-@contact: jari.pennanen@gmail.com
-@license: GNU Lesser General Public License (LGPL). 
-@version: 0.5.2
+.. autoclass:: MPEGAudioFrameIterator
+    :members:
+
+.. autoclass:: VBRHeader
+    :members:
 
 """
 # Pylint disable settings:
@@ -77,92 +96,109 @@ from headers import MPEGAudioHeaderEOFException, MPEGAudioHeaderException
 import math
 import struct
 
-__all__ = ['MPEGAudioFrameBase', 'MPEGFrameIteratoMPEGAudioFrameFrame', 
+__all__ = ['MPEGAudioFrameBase', 'MPEGAudioFrameIterator', 'MPEGAudioFrame', 
            'MPEGAudio', 'MPEGAudioHeaderException', 
            'MPEGAudioHeaderEOFException', 'PARSE_ALL_CHUNK_SIZE']
 
 PARSE_ALL_CHUNK_SIZE = 153600
 """Chunk size of parsing all frames.
-@type: int"""
+
+:type: int"""
         
 class MPEGAudioFrameBase(object):
     """MPEGAudio frame base, should not be instated, only inherited.
     
-    Variables defined here are constant through out the frames of L{MPEGAudio}.
+    Variables defined here are constant through out the frames of
+    :class:`MPEGAudio`.
     
     """
     def __init__(self):
+        
         self.is_private = False
         """Is private?
-        @type: bool 
+        
+        :type: bool
         """
         
         self.is_copyrighted = False
         """Is copyrighted?
-        @type: bool
+        
+        :type: bool
         """
         
         self.samples_per_frame = None
         """Samples per frame
-        @type: int
+        
+        :type: int
         """ 
         
         self.is_original = False
         """Is original?
-        @type: bool 
+        
+        :type: bool 
         """
         
         self.is_protected = False
         """Is protected?
-        @type: bool 
+        
+        :type: bool 
         """
     
         self._padding_size = 0
         """Padding size of header.
-        @type: int""" 
+        
+        :type: int""" 
         
         self.version = None
         """MPEGAudio Version.
-        @type: string
+        
+        :type: string
         """
         
         self.layer = None
         """Layer number.
-        @type: string 
+        
+        :type: string 
         """
         
         self.sample_rate = None
         """Sampling rate in Hz.
-        @type: int 
+        
+        :type: int 
         """
         
         self.channel_mode = None
         """Channel mode.
-        @type: string 
+        
+        :type: string 
         """
         
         self.channel_mode_extension = None
         """Channel mode extension.
-        @type: string 
+        
+        :type: string 
         """
         
         self.emphasis = None
         """Emphasis.
-        @type: string
+        
+        :type: string
         """
         
         self.offset = None
-        """Offset of the MPEGAudio Frame header I{in file}.
+        """Offset of the MPEGAudio Frame header *in file*.
         
-        Notice that this offset points to I{beginning of header's first byte}, 
-        and is I{not} offset of beginning of data.
+        .. note::
+         
+            Offset points to *beginning of header's first byte*, and is *not*
+            offset of beginning of data.
         
-        @type: int
+        :type: int
         
         """
         
 class MPEGAudioFrame(MPEGAudioFrameBase):
-    """MPEGAudio I{Frame} meta data."""
+    """MPEGAudio *Frame* meta data."""
     
     def __init__(self):
         super(MPEGAudioFrame, self).__init__()
@@ -170,46 +206,40 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
         self.bitrate = None
         """Bitrate in kilobits, for example 192.
         
-        In the MPEGAudio audio standard there is a X{free bitrate} format
+        In the MPEGAudio audio standard there is a :term:`free bitrate` format
         described. This free format means that the file is encoded with a
         constant bitrate, which is not one of the predefined bitrates. Only very
         few decoders can handle those files.
         
-        @note: In rare X{free bitrate} case the bitrate mentioned in frame is 
-            C{0}.
-        @type: int
-        
+        :type: int
         """
         
         self.samples_per_frame = None
         """Samples per frame.
-        @type: int
+        :type: int
         """
         
         self.size = None
         """Frame size in bytes.
         
-        @note: Includes the header (4) bytes.
-        @note: Bitrate may be C{0}, thus frame size is C{None} and cannot be 
-            calculated from I{one frame}, in that case the frame size, and
-            bitrate requires second frame measurement.
-        @type: int, or None
-        
+        .. note:: Includes the header (4) bytes.
+        .. note:: Beware when the bitrate is ``0`` for :term:`free bitrate` 
+            frames, the value is ``None``.
+        :type: int, or None
         """
 
     def get_forward_iterator(self, file, chunk_size=None):
         """Get forward iterator from this position.
         
-        @param file: File object
-        @type file: file object
+        :param file: File object
+        :type file: file object
         
-        @param chunk_size: Chunked reading size, C{None} defaults to 
-            L{utils.DEFAULT_CHUNK_SIZE}.
-        @type chunk_size: int
+        :param chunk_size: Chunked reading size, ``None`` defaults to 
+            :const:`mpeg1audio.utils.DEFAULT_CHUNK_SIZE`.
+        :type chunk_size: int
         
-        @note: First frame of generator is I{next} frame.
-        @return: Generator that iterates forward from this frame.
-        @rtype: generator of L{MPEGAudioFrame}
+        :return: Generator that iterates forward from this frame.
+        :rtype: generator of :class:`MPEGAudioFrame`
         
         """
         # TODO: LOW: Free bitrate.
@@ -228,34 +258,34 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
                        max_chunks= -1, max_consecutive_chunks= -1): 
         """Find and parse from file.
         
-        @param file: File object being searched.
-        @type file: file object
+        :param file: File object being searched.
+        :type file: file object
+
+        :param max_frames: Maximum of frames returned. Defaults to ``3``. 
+            ``None`` means give all frames as lazy generator. 
+        :type max_frames: int, or None
         
-        @keyword max_frames: Maximum of frames returned. Defaults to C{3}. 
-            C{None} means give all frames as lazy generator. 
-        @type max_frames: int, or None
+        :param chunk_size: Size of chunked reading. Defaults to 
+            :const:`utils.DEFAULT_CHUNK_SIZE`, minimum ``4``.
+        :type chunk_size: int
         
-        @keyword chunk_size: Size of chunked reading. Defaults to 
-            L{utils.DEFAULT_CHUNK_SIZE}, minimum C{4}.
-        @type chunk_size: int
-        
-        @keyword begin_frame_search: Begin frame search from this position in 
-            file. Defaults to C{-1}, meaning continue where file pointer has
+        :param begin_frame_search: Begin frame search from this position in 
+            file. Defaults to ``-1``, meaning continue where file pointer has
             left.
-        @type begin_frame_search: int 
+        :type begin_frame_search: int 
         
-        @keyword lazily_after: Check also next header(s), before becoming 
-            lazy generator. Defaults to C{1}.
-        @type lazily_after: int
+        :param lazily_after: Check also next header(s), before becoming 
+            lazy generator. Defaults to ``1``.
+        :type lazily_after: int
         
-        @keyword max_chunks: Maximum amount of chunks the chunked reader can 
-            yield. C{-1} means infinity, and can be looped to end of file.
-        @type max_chunks: int
+        :param max_chunks: Maximum amount of chunks the chunked reader can 
+            yield. ``-1`` means infinity, and can be looped to end of file.
+        :type max_chunks: int
         
-        @keyword max_consecutive_chunks: Maximum of I{consecutive} chunks in 
-            returned lazy generator. C{-1} means infinity, and can be looped to
+        :param max_consecutive_chunks: Maximum of *consecutive* chunks in 
+            returned lazy generator. ``-1`` means infinity, and can be looped to
             end of file.
-        @type max_consecutive_chunks: int
+        :type max_consecutive_chunks: int
         
         """
         chunk_size = chunk_size or utils.DEFAULT_CHUNK_SIZE
@@ -288,17 +318,17 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
         
         Parses from given position until header parsing error, or end of chunks.
         
-        @param header_offset: Header offset I{within a file}.
-        @type header_offset: int
+        :param header_offset: Header offset *within a file*.
+        :type header_offset: int
         
-        @param chunks: Generator yielding more chunks when I{End of Chunk} is 
+        :param chunks: Generator yielding more chunks when *End of Chunk* is 
             reached.
-        @type chunks: generator, or list
+        :type chunks: generator, or list
         
-        @return: Generator yielding MPEGAudio frames.
-        @rtype: generator of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
+        :return: Generator yielding MPEGAudio frames.
+        :rtype: generator of :class:`MPEGFrame`
         
-        @see: L{utils.chunked_reader}
+        :see: :func:`utils.chunked_reader()`
         
         """
         previous_mpegframe = None
@@ -353,14 +383,14 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
     def parse(cls, bytes):
         """Tries to create MPEGAudio Frame from given bytes.
         
-        @param bytes: MPEGAudio Header bytes. Usually obtained with 
-            L{headers.get_bytes}
-        @type bytes: int
+        :param bytes: MPEGAudio Header bytes. Usually obtained with 
+            :func:`headers.get_bytes`
+        :type bytes: int
         
-        @rtype: L{MPEGAudioFrame}
-        @return: MPEGAudio Frame
+        :rtype: :class:`MPEGAudioFrame`
+        :return: MPEGAudio Frame
         
-        @raise mpeg1audio.MPEGAudioHeaderException: Raised if MPEGAudio Frame
+        :raise headers.MPEGAudioHeaderException: Raised if MPEGAudio Frame
             cannot be parsed.
             
         """
@@ -411,49 +441,55 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
                                            self._padding_size)
         return self
     
-class MPEGFrameIterator(object):
+class MPEGAudioFrameIterator(object):
     """MPEGAudio Frame iterator, for lazy evaluation."""
     def __init__(self, mpeg, begin_frames, end_frames):
-        """Create MPEGAudio frame iterator.
+        """__init__:
         
-        @param mpeg: MPEGAudio Which frames are to be iterated over.
-        @type mpeg: L{MPEGAudio<mpeg1audio.MPEGAudio>}
+        :param mpeg: MPEGAudio Which frames are to be iterated over.
+        :type mpeg: :class:`MPEGAudio`
         
-        @param begin_frames: First frames of MPEGAudio.
-        @type begin_frames: function giving list of L{MPEGAudioFrame}
+        :param begin_frames: First frames of MPEGAudio.
+        :type begin_frames: lambda: [:class:`MPEGAudioFrame`, ...]
          
-        @param end_frames: End frames of MPEGAudio. 
-        @type end_frames: function giving list of L{MPEGAudioFrame}
+        :param end_frames: End frames of MPEGAudio. 
+        :type end_frames: lambda: [:class:`MPEGAudioFrame`, ...]
         
         """
         self.mpeg = mpeg
         """MPEGAudio which frames are iterated.
-        @type: L{MPEGAudio<mpeg1audio.MPEGAudio>}
+        
+        :type: :class:`MPEGAudio`
         """
         
         self._begin_frames = begin_frames
         """Begin frames.
-        @type: list of L{MPEGAudioFrame<mpeg1audio.MPEGAudioFrame>}
+        
+        :type: list of :class:`MPEGAudioFrame`
         """
         
         self._end_frames = end_frames
         """End frames.
-        @type: list of L{MPEGAudioFrame<mpeg1audio.MPEGAudioFrame>}, or None
+        
+        :type: list of :class:`MPEGAudioFrame`, or None
         """
         
         self._has_parsed_all = False
         """Has parsing all occurred?
-        @type: bool 
+        
+        :type: bool 
         """
         
         self._has_parsed_beginning = not callable(self._begin_frames)
         """Has parsing beginning occurred?
-        @type: bool 
+        
+        :type: bool 
         """
         
         self._has_parsed_ending = not callable(self._end_frames)
         """Has parsing end occurred?
-        @type: bool 
+        
+        :type: bool 
         """
     
     def __len__(self):
@@ -462,7 +498,7 @@ class MPEGFrameIterator(object):
     def parse_all(self, force=False):
         """Parse all frames.
         
-        @see: L{MPEGAudio.parse_all}
+        :see: :func:`MPEGAudio.parse_all`
         
         """
         # TODO: LOW: How do we deal corrupted MPEGAudio files? 
@@ -528,102 +564,44 @@ class MPEGAudio(MPEGAudioFrameBase):
     files. VBR files that doesn't have those headers the file must parse all
     frames. 
     
-    MPEGAudio object is lazy
-    ========================
-    
-    Laziness works when ...
-    -----------------------
-    
-    Laziness works for the cases where we don't need to parse all frames, or
-    ending of the file. Being lazy for MPEGAudio object means that it has passed
-    at least:
-    
-     1. L{is mpeg test <mpeg1audio.MPEGAudio._is_mpeg_test>} returned without
-        exception. 
-     2. L{beginning parsing <mpeg1audio.MPEGAudio._parse_beginning>} is
-        done.
-     
-    Normal initialization of MPEGAudio object does these things, user of this
-    class does not need to care about these. All MPEGAudio objects are lazy,
-    when they have been created without exceptions.
-    
-    Being lazy now, means doing the work later
-    ------------------------------------------
-    
-    There are getters and setters only for those properties which might invoke 
-    parsing all frames. Getters are the lazy ones. If the possibility of parsing 
-    all frames is out of question, you should use getters directly, they have 
-    option to prevent parsing all frames.
-    
-    By using properties we can ensure that all properties and instance variables
-    returns I{meaningful value} instead of C{None}. To write this as a simple 
-    rule that lazy getters should follow:
-    
-     - I{All getters should return meaningful value with B{default arguments}}.
-     
-    That is it! No errors should be raised, no C{None}'s should be given, just
-    the meaningful value. If getter needs to parse to get the meaningful value,
-    that is what it does. Currently there are only two major things that the
-    MPEGAudio object does lazily, when really required:
-    
-     - Parse ending of file
-     - Parse all frames
-    
-    For the end user of this API this is convinient, it might not care if the 
-    file is VBR, CBR, or what ever. For example if one cares only about the 
-    duration of MPEGAudio: 
-    
-    With creating the MPEGAudio instance object I{we ensure} - did not yield
-    parsing exception - that by running C{mpeg.duration} the user gets the
-    duration, even if as worst case scenario it might require parsing all
-    frames.
-    
-    On the other hand, if the user doesn't want to parse all frames, and is
-    satisfied for C{None} for the cases where it cannot be calculated without
-    full parsing, the API gives you possibility to use appropriate getters e.g.
-    L{_get_duration <mpeg1audio.MPEGAudio._get_duration>} with arguments to
-    adjust for the case.
-    
-    @note: This does not provide any kind of updating or playing the mpeg audio 
-        files, only reading out meta data.
-    
     """
     def __init__(self, file, begin_start_looking=0, ending_start_looking=0,
                  mpeg_test=True):
-        """Parses the MPEGAudio file.
-        
-        @todo: If given filename, create file and close it always automatically 
+        """
+        .. todo:: If given filename, create file and close it always automatically 
             when not needed.
         
-        @param file: File handle returned e.g. by open()
-        @type file: file
+        __init__:    
         
-        @param begin_start_looking: Start position of MPEGAudio header search.
+        :param file: File handle returned e.g. by open()
+        :type file: file
+        
+        :param begin_start_looking: Start position of MPEGAudio header search.
             For example if you know that file has ID3v2, it is adviced to give
             the size of ID3v2 tag to this field.
             
-            Value I{must be equal or lesser than} (<=) the beginning of
+            Value *must be equal or lesser than* (<=) the beginning of
             MPEGAudio. If the given value exceeds the first header, the given
             MPEGAudio might be incorrect.
-        @type begin_start_looking: int
+        :type begin_start_looking: int
         
-        @param ending_start_looking: End position of MPEGAudio I{relative to end 
-            of file}. For example if you know that file has ID3v1 footer, give
-            C{128}, the size of ID3v1, this ensures that we can I{at least} skip
+        :param ending_start_looking: End position of MPEGAudio *relative to end 
+            of file*. For example if you know that file has ID3v1 footer, give
+            ``128``, the size of ID3v1, this ensures that we can *at least* skip
             over that.
             
-            Value I{must be equal or lesser than} (<=) end of the last 
+            Value *must be equal or lesser than* (<=) end of the last 
             MPEGAudio header.
             
-        @type ending_start_looking: int
+        :type ending_start_looking: int
         
-        @param mpeg_test: Do mpeg test first before continuing with parsing the 
+        :param mpeg_test: Do mpeg test first before continuing with parsing the 
             beginning. This is useful especially if there is even slight
             possibility that given file is not MPEGAudio, we can rule them out
             fast.
-        @type mpeg_test: bool
+        :type mpeg_test: bool
         
-        @raise mpeg1audio.MPEGAudioHeaderException: Raised if header cannot be
+        :raise headers.MPEGAudioHeaderException: Raised if header cannot be
             found.
         
         """
@@ -631,32 +609,38 @@ class MPEGAudio(MPEGAudioFrameBase):
         
         self._file = file
         """File object.
-        @type: file object
+        
+        :type: file object
         """
         
         self.is_vbr = False
         """Is variable bitrate?
-        @type: bool
+        
+        type: bool
         """
         
         self.filesize = utils.get_filesize(file)
         """Filesize in bytes.
-        @type: int
+        
+        :type: int
         """
         
         self.xing = None
         """XING Header, if any.
-        @type: L{XING<mpeg1audio.XING>}, or None
+        
+        :type: :class:`XING`, or None
         """
         
         self.vbri = None
         """VBRI Header, if any.
-        @type: L{VBRI<mpeg1audio.VBRI>}, or None
+        
+        :type: :class:`VBRI`, or None
         """
         
         self.frames = None
         """All MPEGAudio frames.
-        @type: iterable of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
+        
+        :type: iterator for :class:`MPEGAudioFrame`
         """
         
         self._frame_count = None
@@ -669,30 +653,30 @@ class MPEGAudio(MPEGAudioFrameBase):
         
         test_frames = []
         if mpeg_test:
-            test_frames = list(self._is_mpeg_test())
+            test_frames = list(self.is_mpeg_test())
         
         # Parse beginning of file, when needed. In reality, this is run every 
-        # time init is run. The _set_mpeg_details, XING, VBRI uses the first 
+        # time init is run. The set_mpeg_details, XING, VBRI uses the first 
         # frames so we cannot make this very lazy. 
-        begin_frames = lambda: self._parse_beginning(begin_start_looking)
+        begin_frames = lambda: self.parse_beginning(begin_start_looking)
         
         # Parse ending of file, when needed.
-        end_frames = lambda: self._parse_ending(ending_start_looking)
+        end_frames = lambda: self.parse_ending(ending_start_looking)
         
         # Creates frame iterator between begin and end frames.
-        self.frames = MPEGFrameIterator(self, begin_frames, end_frames)
+        self.frames = MPEGAudioFrameIterator(self, begin_frames, end_frames)
         
         # Set MPEGAudio Details
-        self._set_mpeg_details(self.frames[0], test_frames)
+        self.set_mpeg_details(self.frames[0], test_frames)
         
         # Parse VBR Headers if can be found.
-        self._parse_xing()
-        self._parse_vbri()
+        self.parse_xing()
+        self.parse_vbri()
         
     def _get_size(self, parse_all=False, parse_ending=True):
         """MPEGAudio Size getter.
         
-        @rtype: int, or None
+        :rtype: int, or None
         
         """
         if self._size is not None:
@@ -728,7 +712,7 @@ class MPEGAudio(MPEGAudioFrameBase):
     def _get_sample_count(self, parse_all=False, parse_ending=True):
         """Sample count getter.
         
-        @rtype: int, or None
+        :rtype: int, or None
         
         """      
         frame_count = self._get_frame_count(parse_all=parse_all,
@@ -740,7 +724,7 @@ class MPEGAudio(MPEGAudioFrameBase):
     def _get_bitrate(self, parse_all=True):
         """Bitrate getter.
         
-        @rtype: int, float, or None
+        :rtype: int, float, or None
         
         """
         if self._bitrate is not None:
@@ -761,7 +745,7 @@ class MPEGAudio(MPEGAudioFrameBase):
     def _get_frame_count(self, parse_all=False, parse_ending=True):
         """Frame count getter.
         
-        @rtype: int, or None
+        :rtype: int, or None
         
         """
         if self._frame_count is not None:
@@ -803,7 +787,7 @@ class MPEGAudio(MPEGAudioFrameBase):
     def _get_frame_size(self, parse_all=True):
         """Frame size getter.
         
-        @rtype: int, or None
+        :rtype: int, or None
         
         """
         if self._frame_size is not None:
@@ -827,7 +811,7 @@ class MPEGAudio(MPEGAudioFrameBase):
     def _get_duration(self, parse_all=True):
         """Duration getter.
         
-        @rtype: datetime.timedelta, or None
+        :rtype: datetime.timedelta, or None
         
         """
         if self._duration is not None:
@@ -864,59 +848,62 @@ class MPEGAudio(MPEGAudioFrameBase):
     size = property(_get_size, _set_size)
     """MPEGAudio Size in bytes.
     
-    @note: May start parsing of all frames.
-    @note: May start parsing of beginning frames.
-    @note: May start parsing of ending frames.
-    @type: int 
+    .. note:: 
     
+        May start parsing of :func:`all frames<MPEGAudio.parse_all>`, 
+        or :func:`ending frames<MPEGAudio.parse_ending>`.
+        
+    :type: int 
     """
     
     sample_count = property(_get_sample_count)
     """Count of samples in MPEGAudio.
     
-    @note: May start parsing of all frames. 
-    @type: int
+    .. note:: May start parsing of all frames. 
     
+    :type: int
     """
     
     frame_size = property(_get_frame_size, _set_frame_size)
     """Frame size in bytes.
      
-    For VBR files this is I{average frame size}.
-    @note: May start parsing of all frames.
-    @type: int 
+    For VBR files this is *average frame size*.
     
+    .. note:: May start parsing of all frames.
+    
+    :type: int 
     """
     
     bitrate = property(_get_bitrate, _set_bitrate)
-    """Bitrate of the I{file} in kilobits per second, for example 192.
+    """Bitrate of the *file* in kilobits per second, for example 192.
     
-    For VBR files this is I{average bitrate} returned as C{float}.
-    @note: May start parsing of all frames.
-    @type: int, or float
+    For VBR files this is *average bitrate* returned as ``float``.
     
+    .. note:: May start parsing of all frames.
+    
+    :type: int, or float
     """
         
     frame_count = property(_get_frame_count, _set_frame_count)
     """Count of frames in MPEGAudio.
     
-    @note: May start parsing of all frames.
-    @type: int
+    .. note:: May start parsing of all frames.
     
+    :type: int
     """
     
     duration = property(_get_duration, _set_duration)
     """Duration.
     
-    @note: May start parsing of all frames.
-    @type: datetime.timedelta
+    .. note:: May start parsing of all frames.
     
+    :type: datetime.timedelta
     """
     
-    def _parse_xing(self):
+    def parse_xing(self):
         """Tries to parse and set XING from first mpeg frame.
-        @see: L{MPEGAudio.xing<mpeg1audio.MPEGAudio.xing>}
-        @see: L{XING<mpeg1audio.XING>}
+        
+        :see: :class:`XING`
         
         """
         from xing import XING, XINGHeaderException
@@ -927,10 +914,10 @@ class MPEGAudio(MPEGAudioFrameBase):
         else:
             VBRHeader.set_mpeg(self, self.xing)
             
-    def _parse_vbri(self):
+    def parse_vbri(self):
         """Tries to parse and set VBRI from first mpeg frame.
-        @see: L{MPEGAudio.vbri<mpeg1audio.MPEGAudio.vbri>}
-        @see: L{VBRI<mpeg1audio.VBRI>}
+        
+        :see: :class:`VBRI`
         
         """
         from vbri import VBRI, VBRIHeaderException
@@ -942,17 +929,17 @@ class MPEGAudio(MPEGAudioFrameBase):
             VBRHeader.set_mpeg(self, self.vbri)
 
                 
-    def _is_mpeg_test(self, test_position=None):
+    def is_mpeg_test(self, test_position=None):
         """Test that the file is MPEGAudio.
         
         Validates that from middle of the file we can find three valid 
         consecutive MPEGAudio frames. 
         
-        @raise mpeg1audio.MPEGAudioHeaderException: Raised if MPEGAudio frames 
+        :raise headers.MPEGAudioHeaderException: Raised if MPEGAudio frames 
             cannot be found.
             
-        @return: List of test MPEGAudio frames.
-        @rtype: list
+        :return: List of test MPEGAudio frames.
+        :rtype: list
         
         """
         # The absolute theoretical maximum frame size is 2881 bytes: 
@@ -986,19 +973,19 @@ class MPEGAudio(MPEGAudioFrameBase):
             raise MPEGAudioHeaderException("MPEG Test is not passed, "
                                            "file might not be MPEG?")
                 
-    def _set_mpeg_details(self, first_mpegframe, mpegframes):
-        """Sets details of I{this} MPEGAudio from the given frames.
+    def set_mpeg_details(self, first_mpegframe, mpegframes):
+        """Sets details of *this* MPEGAudio from the given frames.
         
         Idea here is that usually one or multiple mpeg frames represents single 
         MPEGAudio file with good probability, only if the file is VBR this fails.
         
-        @param first_mpegframe: First MPEGAudio frame of the file.
-        @type first_mpegframe: L{MPEGAudioFrame<mpeg1audio.MPEGAudioFrame>}
+        :param first_mpegframe: First MPEGAudio frame of the file.
+        :type first_mpegframe: :class:`MPEGAudioFrame`
         
-        @param mpegframes: List of MPEGAudio frames, order and position does not 
+        :param mpegframes: List of MPEGAudio frames, order and position does not 
             matter, only thing matters are the fact they are from same
             MPEGAudio. These are used determine the VBR status of the file.
-        @type mpegframes: list of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
+        :type mpegframes: [:class:`MPEGAudioFrame`, ...]
         
         """
         # Copy values of MPEGAudio Frame to MPEGAudio, where applicable.
@@ -1030,18 +1017,21 @@ class MPEGAudio(MPEGAudioFrameBase):
     
     def parse_all(self, force=False):
         """Parse all frames.
-                
-        By parsing all frames, MPEGAudio is ensured to populate following fields 
-        with I{accurate values}:
+
+        You should not need to call this, the initialization of
+        :class:`MPEGAudio`, or getters does this automatically.
         
-            - C{frame_count}
-            - C{bitrate}
+        By parsing all frames, MPEGAudio is ensured to populate following fields 
+        with *accurate values*:
+        
+            - ``frame_count``
+            - ``bitrate``
             
         Essentially all properties, and variables of MPEGAudio should be as
         accurate as possible after running this.
             
-        @param force: Force re-parsing all frames. Defaults to C{False}.
-        @type force: bool
+        :param force: Force re-parsing all frames. Defaults to ``False``.
+        :type force: bool
         
         """
         # Semantically, I think, only frames should have parse_all() only, thus
@@ -1050,22 +1040,22 @@ class MPEGAudio(MPEGAudioFrameBase):
         # MPEGAudio.
         self.frames.parse_all(force=force)
     
-    def _parse_beginning(self, begin_offset=0, max_frames=6):
+    def parse_beginning(self, begin_offset=0, max_frames=6):
         """Parse beginning of MPEGAudio.
         
-        @keyword begin_offset: Beginning offset, from beginning of file.
-        @type begin_offset: int
+        :param begin_offset: Beginning offset, from beginning of file.
+        :type begin_offset: int
         
-        @keyword max_frames: Maximum of frames to be parsed, and returned 
-            forward from first found frame. C{-1} means I{infinity}, and can be 
+        :param max_frames: Maximum of frames to be parsed, and returned 
+            forward from first found frame. ``-1`` means *infinity*, and can be 
             looped to end of file.
-        @type max_frames: int
+        :type max_frames: int
         
-        @return: List of MPEGAudio frames.
-        @rtype: list of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
+        :return: List of MPEGAudio frames.
+        :rtype: [:class:`MPEGAudioFrame`, ...]
         
-        @raise mpeg1audio.MPEGAudioHeaderException: Raised if no frames was
-            found. This should not happen if L{MPEGAudio._is_mpeg_test} has
+        :raise headers.MPEGAudioHeaderException: Raised if no frames was
+            found. This should not happen if :class:`MPEGAudio.is_mpeg_test` has
             passed.
             
         """
@@ -1079,32 +1069,37 @@ class MPEGAudio(MPEGAudioFrameBase):
             raise MPEGAudioHeaderEOFException(
                         "There is not enough frames in this file.")
     
-    def _parse_ending(self, end_offset=0, min_frames=3, rewind_offset=4000):
+    def parse_ending(self, end_offset=0, min_frames=3, rewind_offset=4000):
         """Parse ending of MPEGAudio.
         
-        @note: Performance wisely the max_frames argument would be useless, and 
-            is not implemented. As this method must try recursively
-            find_and_parse further and further from the ending until minimum of
-            frames is met.
+        You should not need to call this, the initialization of
+        :class:`MPEGAudio`, or getters does this automatically.
         
-        @keyword end_offset: End offset as relative to I{end of file}, if you
-            know the I{size of footers}, give that.
-        @type end_offset: int
+        .. note:: 
         
-        @keyword min_frames: Minimum amount of frames from the end of file.
-        @type min_frames: int
+            Performance wisely the max_frames argument would be useless, and is
+            not implemented. As this method must try recursively find_and_parse
+            further and further from the ending until minimum of frames is met.
+
+            This might take a long time for files that does not have frames.
         
-        @keyword rewind_offset: When minimum is not met, rewind the offset
-            this much and retry. Defaults to C{4000}.
-        @type rewind_offset: int
+        :param end_offset: End offset as relative to *end of file*, if you
+            know the *size of footers*, give that.
+        :type end_offset: int
         
-        @note: This might take a long time for files that does not have frames.
-        @return: List of MPEGAudio frames, amount of items is variable.
-        @rtype: list of L{MPEGFrames<mpeg1audio.MPEGAudioFrame>}
+        :param min_frames: Minimum amount of frames from the end of file.
+        :type min_frames: int
         
-        @raise mpeg1audio.MPEGAudioHeaderEOFException: Raised if whole file does
+        :param rewind_offset: When minimum is not met, rewind the offset
+            this much and retry. Defaults to ``4000``.
+        :type rewind_offset: int
+        
+        :return: List of MPEGAudio frames, amount of items is variable.
+        :rtype: [:class:`MPEGAudioFrame`, ...]
+        
+        :raise headers.MPEGAudioHeaderEOFException: Raised if whole file does
             not include any frames. This should not happen if
-            L{MPEGAudio._is_mpeg_test} has passed.
+            :func:`MPEGAudio.is_mpeg_test` has passed.
         
         """
         # min_frames is always positive:
@@ -1136,11 +1131,11 @@ class VBRHeader(object):
     def set_mpeg(cls, mpeg, vbr):
         """Set values of VBR header to MPEGAudio.
         
-        @param mpeg: MPEGAudio to be set.
-        @type mpeg: L{MPEGAudio}
+        :param mpeg: MPEGAudio to be set. 
+        :type mpeg: :class:`MPEGAudio`
         
-        @param vbr: VBR from where to set.
-        @type vbr: L{VBRHeader}
+        :param vbr: VBR from where to set.
+        :type vbr: :class:`VBRHeader`
         
         """
         if vbr.frame_count is not None:
@@ -1152,21 +1147,26 @@ class VBRHeader(object):
     def __init__(self):
         self.offset = 0
         """Offset of header in file.
-        @type: int"""
+        
+        :type: int"""
         
         self.size = 0
         """Size of header in file.
-        @type: int"""
+        
+        :type: int"""
         
         self.frame_count = None
         """Frame count of MPEGAudio. (Optional)
-        @type: int, or None"""
+        
+        :type: int, or None"""
         
         self.mpeg_size = None
         """MPEGAudio Size in bytes. (Optional)
-        @type: int, or None"""
+        
+        :type: int, or None"""
         
         self.quality = None
         """VBR Quality.
-        @type: int, or None 
+        
+        :type: int, or None 
         """

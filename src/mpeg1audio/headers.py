@@ -1,4 +1,10 @@
-"""MPEG Headers related parsing."""
+"""
+:mod:`mpeg1audio.headers`
+=========================
+
+MPEG Headers related parsing module.
+
+"""
 
 # Pylint disable settings:
 # ------------------------
@@ -84,10 +90,10 @@ SLOT_COEFFS = {
 def check_sync_bits(bits):
     """Check if given bits has sync bits.
     
-    @param bits: bits to check for sync bits.
-    @type bits: int
+    :param bits: bits to check for sync bits.
+    :type bits: int
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised if bits does not contain
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised if bits does not contain
         sync bits.
     
     """
@@ -97,16 +103,16 @@ def check_sync_bits(bits):
 def get_mpeg_version(bits):
     """Get MPEG version from header bits.
     
-    @param bits: Two version bits in MPEG header.
-    @type bits: int
+    :param bits: Two version bits in MPEG header.
+    :type bits: int
     
-    @return: MPEG Version, one of the following values: C{"2.5", "2", "1"}. 
-    @rtype: string
+    :return: MPEG Version, one of the following values: ``"2.5", "2", "1"``. 
+    :rtype: string
     
-    @todo: Ponder about the usefulness of this being string. Same with
-        L{get_layer}.
+    :todo: Ponder about the usefulness of this being string. Same with
+        :func:`get_layer`
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised when layer cannot be
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised when layer cannot be
         determined.
     
     """
@@ -119,13 +125,13 @@ def get_mpeg_version(bits):
 def get_layer(bits):
     """Get layer from MPEG Header bits.
     
-    @param bits: Two layer bits in MPEG header.
-    @type bits: int
+    :param bits: Two layer bits in MPEG header.
+    :type bits: int
     
-    @return: MPEG Layer, one of the following values: C{'1', '2', '3'}.
-    @rtype: string
+    :return: MPEG Layer, one of the following values: ``'1', '2', '3'``.
+    :rtype: string
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised when layer cannot be
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised when layer cannot be
         determined.
     
     """
@@ -139,19 +145,20 @@ def get_layer(bits):
 def get_bitrate(mpeg_version, layer, bitrate_bits):
     """ Get bitrate from given header data.
     
-    @param mpeg_version: Version of the MPEG, as returned by L{get_mpeg_version}
-    @type mpeg_version: string
+    :param mpeg_version: Version of the MPEG, as returned by
+        :func:`get_mpeg_version`
+    :type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{get_layer}.
-    @type layer: string
+    :param layer: Layer of the MPEG as returned by :func:`get_layer`.
+    :type layer: string
     
-    @param bitrate_bits: Four bitrate related bits in MPEG header.
-    @type bitrate_bits: int
+    :param bitrate_bits: Four bitrate related bits in MPEG header.
+    :type bitrate_bits: int
     
-    @return: Bitrate in I{kilobits} per second.
-    @rtype: int
+    :return: Bitrate in *kilobits* per second.
+    :rtype: int
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised when bitrate cannot be
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised when bitrate cannot be
         determined.
     
     """
@@ -170,17 +177,17 @@ def get_bitrate(mpeg_version, layer, bitrate_bits):
 def get_sample_rate(mpeg_version, bits):
     """Get sample rate by MPEG version and given MPEG Header sample rate bits.
     
-    @param mpeg_version: Version of the MPEG, as returned by 
-        L{get_mpeg_version}
-    @type mpeg_version: string
+    :param mpeg_version: Version of the MPEG, as returned by 
+        :func:`get_mpeg_version`
+    :type mpeg_version: string
     
-    @param bits: Sample rate bits in MPEG header.
-    @type bits: int
+    :param bits: Sample rate bits in MPEG header.
+    :type bits: int
     
-    @return: Sample rate in Hz
-    @rtype: int
+    :return: Sample rate in Hz
+    :rtype: int
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised when sample rate cannot
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised when sample rate cannot
         be determined.
     
     """
@@ -193,14 +200,14 @@ def get_sample_rate(mpeg_version, bits):
 def get_channel_mode(bits):
     """Get channel mode.
     
-    @param bits: Mode bits in MPEG header.
-    @type bits: int
+    :param bits: Mode bits in MPEG header.
+    :type bits: int
     
-    @return: Returns one of the following: C{"stereo"}, C{"joint stereo"}, 
-        C{"dual channel"}, C{"mono"}. 
-    @rtype: string
+    :return: Returns one of the following: ``"stereo"``, ``"joint stereo"``, 
+        ``"dual channel"``, ``"mono"``. 
+    :rtype: string
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode cannot be 
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode cannot be 
         determined.
     """
     
@@ -214,18 +221,18 @@ def get_channel_mode(bits):
 def get_channel_mode_ext(layer, bits):
     """Get channel mode extension.
     
-    @param layer: Layer of the MPEG as returned by 
-        L{get_layer}.
-    @type layer: string
+    :param layer: Layer of the MPEG as returned by 
+        :func:`get_layer`.
+    :type layer: string
     
-    @param bits: Extension mode bits in MPEG header.
-    @type bits: int
+    :param bits: Extension mode bits in MPEG header.
+    :type bits: int
     
-    @rtype: string 
-    @return: Channel extension mode. One of the following values: C{"4-31", 
-        "8-31", "12-31", "16-31", "", "IS", "MS", "IS+MS"}
+    :rtype: string 
+    :return: Channel extension mode. One of the following values: ``"4-31", 
+        "8-31", "12-31", "16-31", "", "IS", "MS", "IS+MS"``
        
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode extension
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode extension
         cannot be determined.
         
     """
@@ -239,14 +246,14 @@ def get_channel_mode_ext(layer, bits):
 def get_emphasis(bits):
     """Get emphasis of audio.
     
-    @param bits: Emphasis bits in MPEG header.
-    @type bits: int
+    :param bits: Emphasis bits in MPEG header.
+    :type bits: int
     
-    @return: Returns emphasis, one of the following: C{"none", "50/15 ms", 
-        "reserved", "CCIT J.17"}
-    @rtype: string 
+    :return: Returns emphasis, one of the following: ``"none", "50/15 ms", 
+        "reserved", "CCIT J.17"``
+    :rtype: string 
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised when emphasis cannot be
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised when emphasis cannot be
         determined.
     
     """
@@ -262,21 +269,21 @@ def get_bytes(header_offset, chunk):
     
     Value can then be used to parse and verify the bits.
         
-    @param header_offset: Position I{within a chunk} where to look for header 
+    :param header_offset: Position *within a chunk* where to look for header 
         bytes.
-    @type header_offset: int
+    :type header_offset: int
     
-    @param chunk: Chunk of data where to get header bytes.
-    @type chunk: string
+    :param chunk: Chunk of data where to get header bytes.
+    :type chunk: string
     
-    @return: Header bytes. Used by L{MPEGAudioFrame.parse}.
-    @rtype: int
+    :return: Header bytes. Used by :func:`MPEGAudioFrame.parse`.
+    :rtype: int
     
-    @raise mpeg1audio.MPEGAudioHeaderEOFException: Raised when end of chunk was 
+    :raise mpeg1audio.MPEGAudioHeaderEOFException: Raised when end of chunk was 
         reached.
         
-    @see: L{MPEGAudioFrame.parse}
-    @see: L{MPEGAudioFrame.find_and_parse}
+    :see: :func:`MPEGAudioFrame.parse`
+    :see: :func:`MPEGAudioFrame.find_and_parse`
 
     """
     # Get first four bytes
@@ -296,17 +303,17 @@ def get_bytes(header_offset, chunk):
 def get_samples_per_frame(mpeg_version, layer):
     """Get samples per frame.
     
-    @param mpeg_version: Version of the mpeg, as returned by 
-        L{get_mpeg_version}
-    @type mpeg_version: string
+    :param mpeg_version: Version of the mpeg, as returned by 
+        :func:`get_mpeg_version`
+    :type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{get_layer}.
-    @type layer: string
+    :param layer: Layer of the MPEG as returned by :func:`get_layer`.
+    :type layer: string
     
-    @rtype: int
-    @return: Samples per frame.
+    :rtype: int
+    :return: Samples per frame.
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised if samples per frame
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised if samples per frame
         cannot be determined.
     
     """
@@ -320,26 +327,26 @@ def get_samples_per_frame(mpeg_version, layer):
 def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     """Get size.
     
-    @param mpeg_version: Version of the MPEG, as returned by 
-        L{get_mpeg_version}
-    @type mpeg_version: string
+    :param mpeg_version: Version of the MPEG, as returned by 
+        :func:`get_mpeg_version`
+    :type mpeg_version: string
     
-    @param layer: Layer of the MPEG as returned by L{get_layer}.
-    @type layer: string
+    :param layer: Layer of the MPEG as returned by :func:`get_layer`.
+    :type layer: string
     
-    @param sample_rate: Sampling rate in Hz.
-    @type sample_rate: int
+    :param sample_rate: Sampling rate in Hz.
+    :type sample_rate: int
     
-    @param bitrate: Bitrate in kilobits per second.
-    @type bitrate: int
+    :param bitrate: Bitrate in kilobits per second.
+    :type bitrate: int
     
-    @param padding_size: Size of header padding. Always either C{1} or C{0}.
-    @type padding_size: int
+    :param padding_size: Size of header padding. Always either ``1`` or ``0``.
+    :type padding_size: int
     
-    @return: Frame size in bytes.
-    @rtype: int
+    :return: Frame size in bytes.
+    :rtype: int
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised when frame size cannot be 
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised when frame size cannot be 
         determined.
     
     """
@@ -359,17 +366,17 @@ def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
 def get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
     """Get average bitrate of VBR file.
     
-    @param mpeg_size: Size of MPEG in bytes.
-    @type mpeg_size: number
+    :param mpeg_size: Size of MPEG in bytes.
+    :type mpeg_size: number
     
-    @param sample_count: Count of samples.
-    @type sample_count: number
+    :param sample_count: Count of samples.
+    :type sample_count: number
 
-    @param sample_rate: Sample rate in Hz.
-    @type sample_rate: number
+    :param sample_rate: Sample rate in Hz.
+    :type sample_rate: number
     
-    @return: Average bitrate in kilobits per second.
-    @rtype: float
+    :return: Average bitrate in kilobits per second.
+    :rtype: float
     
     """
     bytes_per_sample = float(mpeg_size) / float(sample_count)
@@ -380,28 +387,28 @@ def get_vbr_bitrate(mpeg_size, sample_count, sample_rate):
 def get_sample_count(frame_count, samples_per_frame):
     """Get sample count.
     
-    @param frame_count: Count of frames.
-    @type frame_count: int
+    :param frame_count: Count of frames.
+    :type frame_count: int
     
-    @param samples_per_frame: Samples per frame.
-    @type samples_per_frame: int
+    :param samples_per_frame: Samples per frame.
+    :type samples_per_frame: int
     
-    @return: Sample count
-    @rtype: int
+    :return: Sample count
+    :rtype: int
     
     """
     return frame_count * samples_per_frame
 
 def get_duration_from_sample_count(sample_count, sample_rate):
     """Get MPEG Duration.
-    @param sample_count: Count of samples.
-    @type sample_count: int
+    :param sample_count: Count of samples.
+    :type sample_count: int
     
-    @param sample_rate: Sample rate in Hz.
-    @type sample_rate: int
+    :param sample_rate: Sample rate in Hz.
+    :type sample_rate: int
     
-    @return: Duration of MPEG, accuracy in seconds.
-    @rtype: datetime.timedelta
+    :return: Duration of MPEG, accuracy in seconds.
+    :rtype: datetime.timedelta
     
     """
     return timedelta(seconds=int(round(sample_count / sample_rate)))
@@ -409,17 +416,17 @@ def get_duration_from_sample_count(sample_count, sample_rate):
 def get_duration_from_size_bitrate(mpeg_size, bitrate):
     """Calculate duration from constant bitrate and MPEG Size.
     
-    @param mpeg_size: MPEG Size in bytes.
-    @type mpeg_size: int
+    :param mpeg_size: MPEG Size in bytes.
+    :type mpeg_size: int
     
-    @param bitrate: Bitrate in kilobits per second, for example 192.
-    @type bitrate: int
+    :param bitrate: Bitrate in kilobits per second, for example 192.
+    :type bitrate: int
     
-    @raise mpeg1audio.MPEGAudioHeaderException: Raised if duration cannot be 
+    :raise mpeg1audio.MPEGAudioHeaderException: Raised if duration cannot be 
         determined.
     
-    @return: Duration of the MPEG, with second accuracy.
-    @rtype: datetime.timedelta
+    :return: Duration of the MPEG, with second accuracy.
+    :rtype: datetime.timedelta
     
     """
     try:
@@ -430,14 +437,14 @@ def get_duration_from_size_bitrate(mpeg_size, bitrate):
 def get_vbr_frame_size(mpeg_size, frame_count):
     """Get VBR average frame size.
     
-    @param mpeg_size: Size of MPEG in bytes.
-    @type mpeg_size: int
+    :param mpeg_size: Size of MPEG in bytes.
+    :type mpeg_size: int
     
-    @param frame_count: Count of frames in MPEG.
-    @type frame_count: int
+    :param frame_count: Count of frames in MPEG.
+    :type frame_count: int
     
-    @return: Average frame size.
-    @rtype: number
+    :return: Average frame size.
+    :rtype: number
     
     """
     return mpeg_size / frame_count
@@ -445,28 +452,30 @@ def get_vbr_frame_size(mpeg_size, frame_count):
 class MPEGAudioHeaderException(Exception):
     """MPEG Header Exception, unable to parse or read the header."""
     def __init__(self, message, mpeg_offset=None, bad_offset=None):
-        """MPEG Header Exception.
+        """__init__:
         
-        @param message: Message of the exception.
-        @type message: string
+        :param message: Message of the exception.
+        :type message: string
         
-        @keyword mpeg_offset: Offset of the MPEG Frame in file.
-        @type mpeg_offset: int 
+        :keyword mpeg_offset: Offset of the MPEG Frame in file.
+        :type mpeg_offset: int 
         
-        @keyword bad_offset: Bad offset of the MPEG Frame in file.
-        @type bad_offset: int
+        :keyword bad_offset: Bad offset of the MPEG Frame in file.
+        :type bad_offset: int
         
         """
         super(MPEGAudioHeaderException, self).__init__(message)
         
         self.mpeg_offset = mpeg_offset
         """MPEG Offset within file
-        @type: int"""
+        
+        :type: int"""
         
         self.bad_offset = bad_offset
         """Bad offset within file
-        @type: int"""
+        
+        :type: int"""
 
 class MPEGAudioHeaderEOFException(MPEGAudioHeaderException):
-    """MPEG Header End of File (Usually I{End of Chunk}) is reached."""
+    """MPEG Header End of File (Usually *End of Chunk*) is reached."""
     pass

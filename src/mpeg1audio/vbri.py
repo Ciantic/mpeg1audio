@@ -1,4 +1,10 @@
-"""VBRI (Fraunhofer Encoder) Header related parsing."""
+"""
+:mod:`mpeg1audio.vbri`
+======================
+
+VBRI (Fraunhofer Encoder) Header
+
+"""
 
 # Pylint disable settings:
 # ------------------------
@@ -27,26 +33,26 @@ class VBRI(VBRHeader):
         
         self.delay = 0
         """Delay.
-        @type: float""" 
+        :type: float""" 
         
         self.version = None
         """Version number of VBRI.
-        @type: int"""
+        :type: int"""
         
     @classmethod
     def find_and_parse(cls, file, first_frame_offset):
         """Find and parse VBRI header in MPEG File.
         
-        @param file: File object.
-        @type file: file object
+        :param file: File object.
+        :type file: file object
         
-        @param first_frame_offset: Offset of first mpeg frame in file.
-        @type first_frame_offset: int
+        :param first_frame_offset: Offset of first mpeg frame in file.
+        :type first_frame_offset: int
         
-        @return: XING Header in given file.
-        @rtype: L{VBRI}
+        :return: XING Header in given file.
+        :rtype: :class:`XING`
         
-        @raise VBRIHeaderException: Raised if VBRI Header cannot be 
+        :raise VBRIHeaderException: Raised if VBRI Header cannot be 
             parsed or found.
             
         """
