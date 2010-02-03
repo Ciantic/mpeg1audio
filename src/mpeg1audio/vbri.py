@@ -1,7 +1,4 @@
 """
-:mod:`mpeg1audio.vbri`
-======================
-
 VBRI (Fraunhofer Encoder) Header
 
 """

@@ -1,7 +1,4 @@
 """
-:mod:`mpeg1audio`
-================================
-
 Python package which is intended to gather all kinds of MPEG-1 Audio related
 meta information from file. Such as duration of MPEGAudio file, average bitrate
 for variable bitrate (VBR) MPEGAudio files, etc.
@@ -22,10 +19,6 @@ lazily</laziness>`. It doesn't parse all frames, or ending unless really needed.
 .. todo:: Table of contents for VBR, this is not high on priority list since we
     don't need to seek the MPEGAudio really.
 
-.. moduleauthor:: Jari Pennanen <jari.pennanen@gmail.com>
-.. license: FreeBSD License. 
-.. version: 0.5.2
-
 Usage example
 -------------
 
@@ -42,30 +35,15 @@ Why the exception? It may seem unnecessary, but it has a purpose so that there
 cannot be *empty* MPEGAudio instances, those are more infuriating than the
 handling of exception.
 
-Members
--------
-
-.. autoclass:: MPEGAudio
-    :members:
-    :inherited-members:
-
-.. autoclass:: MPEGAudioFrame
-    :members:
-    :inherited-members:
-    
-Boilerplate members
--------------------
-
-.. autoclass:: MPEGAudioFrameBase
-    :members:
-
-.. autoclass:: MPEGAudioFrameIterator
-    :members:
-
-.. autoclass:: VBRHeader
-    :members:
-
 """
+
+__version__ = "0.5.5"
+__release__ = "0.5.5 alpha"
+__copyright__ = "Jari Pennanen, 2010"
+__description__ = "MPEG-1 Audio package"
+__author__ = "Jari Pennanen"
+__license__ = "FreeBSD, see COPYING"
+
 # Pylint disable settings:
 # ------------------------
 # ToDos, DocStrings:
@@ -98,7 +76,8 @@ import struct
 
 __all__ = ['MPEGAudioFrameBase', 'MPEGAudioFrameIterator', 'MPEGAudioFrame', 
            'MPEGAudio', 'MPEGAudioHeaderException', 
-           'MPEGAudioHeaderEOFException', 'PARSE_ALL_CHUNK_SIZE']
+           'MPEGAudioHeaderEOFException', 'PARSE_ALL_CHUNK_SIZE', 'headers', 
+           'utils', 'vbri', 'xing']
 
 PARSE_ALL_CHUNK_SIZE = 153600
 """Chunk size of parsing all frames.
@@ -212,20 +191,26 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
         few decoders can handle those files.
         
         :type: int
+        
         """
         
         self.samples_per_frame = None
         """Samples per frame.
         :type: int
+        
         """
         
         self.size = None
         """Frame size in bytes.
         
         .. note:: Includes the header (4) bytes.
-        .. note:: Beware when the bitrate is ``0`` for :term:`free bitrate` 
+        .. note::
+         
+            Beware when the bitrate is ``0`` for :term:`free bitrate` 
             frames, the value is ``None``.
+            
         :type: int, or None
+        
         """
 
     def get_forward_iterator(self, file, chunk_size=None):

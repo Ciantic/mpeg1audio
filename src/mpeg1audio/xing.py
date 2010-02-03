@@ -1,7 +1,4 @@
 """
-:mod:`mpeg1audio.xing`
-======================
-
 XING VBR Header parsing module.
 
 """

@@ -1,7 +1,4 @@
 """
-:mod:`mpeg1audio.headers`
-=========================
-
 MPEG Headers related parsing module.
 
 """
@@ -24,18 +21,21 @@ MPEG_VERSIONS = {
     2 : '2',
     3 : '1',
 }
+"""MPEG Version lookup dict"""
     
 LAYERS = {
     1 : '3',
     2 : '2',
     3 : '1',
 }
+"""Layer lookup dict"""
 
 BITRATE__2__2_5 = {
     '1': (0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256),
     '2': (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
     '3': (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
 }
+"""Bitrate (2 and 2.5) lookup dict"""
 
 BITRATE = {
 '1': {
@@ -46,24 +46,30 @@ BITRATE = {
 '2' : BITRATE__2__2_5,
 '2.5' : BITRATE__2__2_5,
 } 
+"""Bitrate lookup dict"""
 
 SAMPLERATE = {
     '1':   (44100, 48000, 32000),
     '2':   (22050, 24000, 16000),
     '2.5': (11025, 12000, 8000),
 }
+"""Samplerate lookup dict"""
 
 CHANNEL_MODES = ("stereo", "joint stereo", "dual channel", "mono")
+"""Channel modes lookup dict"""
     
-CHANNEL_MODE_EXT_1__2 = ("4-31", "8-31", "12-31", "16-31") 
+CHANNEL_MODE_EXT_1__2 = ("4-31", "8-31", "12-31", "16-31")
+"""Channel mode extension (1 and 2) lookup dict""" 
     
 CHANNEL_MODE_EXT = {
     '1': CHANNEL_MODE_EXT_1__2,
     '2': CHANNEL_MODE_EXT_1__2,
     '3': ("", "IS", "MS", "IS+MS")
 }
+"""Channel mode extension lookup dict"""
     
 EMPHASES = ("none", "50/15 ms", "reserved", "CCIT J.17")
+"""Emphasis lookup dict"""
 
 SAMPLES_PER_FRAME = {
     '1': {
@@ -76,16 +82,20 @@ SAMPLES_PER_FRAME = {
         '1': 384, '2': 1152, '3': 576,
     },
 }
+"""Samples per frame lookup dict"""
        
 SLOTS = { '1' : 4, '2' : 1, '3' : 1 }
+"""Slots lookup dict"""
 
 SLOT_COEFFS_2__2_5 = { '1': 12, '2': 144, '3': 72 }
-  
+"""Slots coefficient (2 and 2.5) lookup dict"""
+
 SLOT_COEFFS = {
     '1': { '1': 12, '2': 144, '3': 144 },
     '2': SLOT_COEFFS_2__2_5,
     '2.5': SLOT_COEFFS_2__2_5,
 }
+"""Slot coefficient lookup dict"""
 
 def check_sync_bits(bits):
     """Check if given bits has sync bits.

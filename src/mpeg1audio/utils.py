@@ -1,6 +1,5 @@
 """
-:mod:`mpeg1audio.utils`
-=======================
+Utility helpers.
 """
 
 # Pylint disable settings:

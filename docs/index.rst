@@ -12,19 +12,16 @@ MPEG-1 Audio Python package's documentation.
 	only *reading out meta data*.
 
  
-.. automodule:: mpeg1audio
-	
-.. automodule:: mpeg1audio.headers
-	:members:
-	
-.. automodule:: mpeg1audio.utils
-	:members:
-	
-.. automodule:: mpeg1audio.vbri
-	:members:
+.. autosummary::
+    :toctree: api
+    
+    mpeg1audio
+    
+.. toctree::
+    :maxdepth: 2
 
-.. automodule:: mpeg1audio.xing
-	:members:
+    glossary
+    laziness
 	
 Indices and tables
 ==================
