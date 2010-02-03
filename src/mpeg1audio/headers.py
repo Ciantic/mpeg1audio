@@ -462,8 +462,7 @@ def get_vbr_frame_size(mpeg_size, frame_count):
 class MPEGAudioHeaderException(Exception):
     """MPEG Header Exception, unable to parse or read the header."""
     def __init__(self, message, mpeg_offset=None, bad_offset=None):
-        """__init__:
-        
+        """
         :param message: Message of the exception.
         :type message: string
         

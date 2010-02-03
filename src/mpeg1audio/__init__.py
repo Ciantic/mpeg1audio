@@ -429,8 +429,7 @@ class MPEGAudioFrame(MPEGAudioFrameBase):
 class MPEGAudioFrameIterator(object):
     """MPEGAudio Frame iterator, for lazy evaluation."""
     def __init__(self, mpeg, begin_frames, end_frames):
-        """__init__:
-        
+        """        
         :param mpeg: MPEGAudio Which frames are to be iterated over.
         :type mpeg: :class:`MPEGAudio`
         
@@ -555,8 +554,6 @@ class MPEGAudio(MPEGAudioFrameBase):
         """
         .. todo:: If given filename, create file and close it always automatically 
             when not needed.
-        
-        __init__:    
         
         :param file: File handle returned e.g. by open()
         :type file: file
