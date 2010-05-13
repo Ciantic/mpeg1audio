@@ -236,6 +236,35 @@ class VBRHeaderlessTests(unittest.TestCase):
         self.assertEqual(self.mpeg.frames._has_parsed_all, True)
         self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
 
+class VBRHeaderlessFileOpenerTests(unittest.TestCase):
+    """FO VBR headerless tests."""
+    def setUp(self):
+        self.mpeg = MPEGAudio('data/vbr_empty.mp3')
+        
+    def testIsVBR(self):
+        """FO VBR headerless is VBR?"""
+        self.assertEqual(self.mpeg.is_vbr, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, False)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
+        
+    def testBitrate(self):
+        """FO VBR headerless average bitrate"""
+        self.assertEqual(int(self.mpeg.bitrate), 94)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, True)
+        
+    def testFrameCount(self):
+        """FO VBR headerless frame count"""
+        self.assertEqual(self.mpeg.frame_count, 8074)
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
+    
+    def testDuration(self):
+        """FO VBR headerless duration"""
+        self.assertEqual(self.mpeg.duration, timedelta(seconds=210))
+        self.assertEqual(self.mpeg.frames._has_parsed_all, True)
+        self.assertEqual(self.mpeg.frames._has_parsed_ending, False)
+        
 class ChunkedReadTests(unittest.TestCase):
     def setUp(self):
         self.file = open('data/song.mp3', 'rb')

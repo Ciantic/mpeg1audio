@@ -1,6 +1,7 @@
 """
 Utility helpers.
 """
+import os
 
 # Pylint disable settings:
 # ------------------------
@@ -246,3 +247,35 @@ def genlimit(generator, min, max):
         generator = genmax(generator, max)
         
     return generator
+
+class FileOpener(object):
+    """File opener"""
+    
+    def __init__(self, filepath=None, mode=None):
+        self.filepath = filepath
+        """Path to file"""
+        
+        self.mode = mode
+        """Open mode"""
+        
+        self.file = None
+        """File object"""
+    
+    def __get__(self, obj, cls=None):
+        if obj is None:
+            return None
+        
+        _filepath = obj.__dict__.get("_filepath", None)
+        _file = obj.__dict__.get('_filehandle', None)
+        
+        # Try to re-open the closed file
+        if _file and _file.closed:
+            try:
+                _file = open(self.filepath or _filepath, self.mode or _file.mode)
+            except (IOError, os.error):
+                return None
+            setattr(obj, "_filehandle", _file)
+            return _file
+            
+        return _file
+        

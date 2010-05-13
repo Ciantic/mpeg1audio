@@ -36,6 +36,8 @@ cannot be *empty* MPEGAudio instances, those are more infuriating than the
 handling of exception.
 
 """
+import os
+from mpeg1audio.utils import FileOpener
 
 __version__ = "0.5.5"
 __release__ = "0.5.5 alpha"
@@ -498,6 +500,9 @@ class MPEGAudioFrameIterator(object):
         for index, frame in enumerate(self):
             avg_bitrate += frame.bitrate
         
+        # Close for now
+        self.mpeg.close()
+            
         frame_count = index + 1
         bitrate = avg_bitrate / frame_count
         
@@ -549,14 +554,19 @@ class MPEGAudio(MPEGAudioFrameBase):
     frames. 
     
     """
+    
+    _file = FileOpener(mode='rb')
+    """Opens the file when needed"""
+
     def __init__(self, file, begin_start_looking=0, ending_start_looking=0,
                  mpeg_test=True):
         """
         .. todo:: If given filename, create file and close it always automatically 
             when not needed.
         
-        :param file: File handle returned e.g. by open()
-        :type file: file
+        :param file: File handle returned e.g. by open(). Alternatively path to
+            file which to open on request.
+        :type file: file object, or string
         
         :param begin_start_looking: Start position of MPEGAudio header search.
             For example if you know that file has ID3v2, it is adviced to give
@@ -589,11 +599,37 @@ class MPEGAudio(MPEGAudioFrameBase):
         """
         super(MPEGAudio, self).__init__()
         
-        self._file = file
-        """File object.
+        self._filepath = None
+        """File path
         
-        :type: file object
+        type: String, unicode, or :const:`None`
         """
+        
+        self._filehandle = None
+        """File handle when instiated using path to file.
+        
+        type: File object, or :const:`None`
+        """
+        
+        # If instiated using path to file
+        if isinstance(file, (str, unicode)):
+            self._filepath = file
+            
+            # Open the file
+            try:
+                file = open(file, "rb")
+            except (IOError, os.error):
+                raise MPEGAudioHeaderException(
+                    'File %s cannot be opened' % file)
+            self._filehandle = file 
+            
+        # If instiated using file object
+        else:
+            self._file = file
+            """File object.
+            
+            :type: file object
+            """
         
         self.is_vbr = False
         """Is variable bitrate?
@@ -654,6 +690,13 @@ class MPEGAudio(MPEGAudioFrameBase):
         # Parse VBR Headers if can be found.
         self.parse_xing()
         self.parse_vbri()
+        
+        # Close for now
+        self.close()
+            
+    def close(self):
+        if self._filehandle:
+            self._filehandle.close()
         
     def _get_size(self, parse_all=False, parse_ending=True):
         """MPEGAudio Size getter.
