@@ -7,7 +7,7 @@ import os
 # ------------------------
 # ToDos, DocStrings:
 # pylint: disable-msg=W0511,W0105 
- 
+
 # Unused variable, argument:
 # pylint: disable-msg=W0612,W0613
 
@@ -34,7 +34,7 @@ def get_filesize(file):
     filesize = file.tell()
     file.seek(offset)
     return filesize
-    
+
 def chunked_reader(file, chunk_size=None, start_position= -1,
                     max_chunks= -1, reset_offset=True):
     """Reads file in chunks for performance in handling of big files.
@@ -64,19 +64,19 @@ def chunked_reader(file, chunk_size=None, start_position= -1,
     """
     if start_position != -1:
         file.seek(start_position)
-        
+
     offset = file.tell()
     chunk = ""
-    chunk_size = chunk_size or DEFAULT_CHUNK_SIZE 
-            
+    chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
+
     i = 0
     while True:
         if 0 < max_chunks <= i:
             break
-        
+
         if reset_offset:
             file.seek(offset + len(chunk))
-        
+
         offset = file.tell()
         chunk = file.read(chunk_size)
         if not chunk:
@@ -98,14 +98,14 @@ def find_all_overlapping(string, occurrence):
     
     """
     found = 0
-    
+
     while True:
         found = string.find(occurrence, found)
         if found != -1:
             yield found
         else:
             return
-        
+
         found += 1
 
 # TODO: HIGH: Wrap Open and Close.
@@ -133,16 +133,16 @@ def wrap_open_close(function, object, filename, mode='rb',
     
     """
     file_handle = getattr(object, file_handle_name)
-    
+
     if (file_handle is not None) and (not file_handle.closed):
         function()
         return
-    
+
     new_file_handle = open(filename, mode)
     setattr(object, file_handle_name, new_file_handle)
     function()
     new_file_handle.close()
-        
+
 def join_iterators(iterable1, iterable2):
     """Joins list and generator.
     
@@ -158,10 +158,10 @@ def join_iterators(iterable1, iterable2):
     """
     for item1 in iterable1:
         yield item1
-        
+
     for item2 in iterable2:
         yield item2
-        
+
 def genmin(generator, min):
     """Ensures that generator has min amount of items left.
     
@@ -194,7 +194,7 @@ def genmin(generator, min):
             cache.append(generator.next())
         except StopIteration:
             raise ValueError('Minimum amount not met.')
-        
+
     return join_iterators(cache, generator)
 
 def genmax(generator, max):
@@ -220,7 +220,7 @@ def genmax(generator, max):
         yield item
         if index + 1 >= max:
             return
-        
+
 def genlimit(generator, min, max):
     """Limit generator *item count* between min and max.
     
@@ -239,35 +239,35 @@ def genlimit(generator, min, max):
     """
     if (min is None) and (max is None):
         return generator
-    
+
     if min is not None:
         generator = genmin(generator, min)
-        
+
     if max is not None:
         generator = genmax(generator, max)
-        
+
     return generator
 
 class FileOpener(object):
     """File opener"""
-    
+
     def __init__(self, filepath=None, mode=None):
         self.filepath = filepath
         """Path to file"""
-        
+
         self.mode = mode
         """Open mode"""
-        
+
         self.file = None
         """File object"""
-    
+
     def __get__(self, obj, cls=None):
         if obj is None:
             return None
-        
+
         _filepath = obj.__dict__.get("_filepath", None)
         _file = obj.__dict__.get('_filehandle', None)
-        
+
         # Try to re-open the closed file
         if _file and _file.closed:
             try:
@@ -276,6 +276,5 @@ class FileOpener(object):
                 return None
             setattr(obj, "_filehandle", _file)
             return _file
-            
+
         return _file
-        

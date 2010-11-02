@@ -7,7 +7,7 @@ VBRI (Fraunhofer Encoder) Header
 # ------------------------
 # ToDos, DocStrings:
 # pylint: disable-msg=W0511,W0105
- 
+
 # Unused variable, argument:
 # pylint: disable-msg=W0612,W0613
 
@@ -27,15 +27,15 @@ class VBRI(VBRHeader):
     """
     def __init__(self):
         super(VBRI, self).__init__()
-        
+
         self.delay = 0
         """Delay.
-        :type: float""" 
-        
+        :type: float"""
+
         self.version = None
         """Version number of VBRI.
         :type: int"""
-        
+
     @classmethod
     def find_and_parse(cls, file, first_frame_offset):
         """Find and parse VBRI header in MPEG File.
@@ -55,35 +55,35 @@ class VBRI(VBRHeader):
         """
         file.seek(first_frame_offset)
         chunk_offset, chunk = file.tell(), file.read(1024)
-        
+
         beginning_of_vbri = 4 + 32 # Header 4 bytes, VBRI is in 32nd byte.
-        
+
         # If positive match for VBRI
         if chunk[beginning_of_vbri:beginning_of_vbri + 4] == "VBRI":
             self = VBRI()
             self.offset = chunk_offset + beginning_of_vbri
             self.size = 26
-            
+
             if len(chunk) < 24:
                 raise VBRIHeaderException('VBRI EOF')
-            
+
             fcur = beginning_of_vbri
             fcur += 4 # Size of "VBRI"
             entries_in_toc = 0 #@UnusedVariable
             scale_factor_of_toc = 0 #@UnusedVariable
             size_per_table = 0 #@UnusedVariable
             frames_per_table = 0 #@UnusedVariable
-            
+
             (self.version, self.delay, self.quality, self.mpeg_size,
              self.frame_count, entries_in_toc, #@UnusedVariable
              scale_factor_of_toc, size_per_table, #@UnusedVariable
              frames_per_table) = struct.unpack('>HHHIIHHHH', #@UnusedVariable 
                                                chunk[fcur:fcur + 22])
-             
+
             # TODO: TOC!
-            
-            return self 
-        
+
+            return self
+
         raise VBRIHeaderException('VBRI Header not found')
 
 class VBRIException(Exception):

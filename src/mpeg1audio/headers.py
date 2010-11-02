@@ -7,7 +7,7 @@ MPEG Headers related parsing module.
 # ------------------------
 # ToDos, DocStrings:
 # pylint: disable-msg=W0511,W0105
- 
+
 # Unused variable, argument:
 # pylint: disable-msg=W0612,W0613
 
@@ -22,7 +22,7 @@ MPEG_VERSIONS = {
     3 : '1',
 }
 """MPEG Version lookup dict"""
-    
+
 LAYERS = {
     1 : '3',
     2 : '2',
@@ -45,7 +45,7 @@ BITRATE = {
     },
 '2' : BITRATE__2__2_5,
 '2.5' : BITRATE__2__2_5,
-} 
+}
 """Bitrate lookup dict"""
 
 SAMPLERATE = {
@@ -57,17 +57,17 @@ SAMPLERATE = {
 
 CHANNEL_MODES = ("stereo", "joint stereo", "dual channel", "mono")
 """Channel modes lookup dict"""
-    
+
 CHANNEL_MODE_EXT_1__2 = ("4-31", "8-31", "12-31", "16-31")
-"""Channel mode extension (1 and 2) lookup dict""" 
-    
+"""Channel mode extension (1 and 2) lookup dict"""
+
 CHANNEL_MODE_EXT = {
     '1': CHANNEL_MODE_EXT_1__2,
     '2': CHANNEL_MODE_EXT_1__2,
     '3': ("", "IS", "MS", "IS+MS")
 }
 """Channel mode extension lookup dict"""
-    
+
 EMPHASES = ("none", "50/15 ms", "reserved", "CCIT J.17")
 """Emphasis lookup dict"""
 
@@ -83,7 +83,7 @@ SAMPLES_PER_FRAME = {
     },
 }
 """Samples per frame lookup dict"""
-       
+
 SLOTS = { '1' : 4, '2' : 1, '3' : 1 }
 """Slots lookup dict"""
 
@@ -109,7 +109,7 @@ def check_sync_bits(bits):
     """
     if (bits & 2047) != 2047:
         raise MPEGAudioHeaderException('Sync bits does not match.')
-    
+
 def get_mpeg_version(bits):
     """Get MPEG version from header bits.
     
@@ -126,12 +126,12 @@ def get_mpeg_version(bits):
         determined.
     
     """
-    
+
     try:
         return MPEG_VERSIONS[bits]
     except (KeyError, IndexError):
         raise MPEGAudioHeaderException('Unknown MPEG version.')
-    
+
 def get_layer(bits):
     """Get layer from MPEG Header bits.
     
@@ -146,12 +146,12 @@ def get_layer(bits):
     
     """
 
-    
+
     try:
         return LAYERS[bits]
     except (KeyError, IndexError):
         raise MPEGAudioHeaderException('Unknown Layer version')
-    
+
 def get_bitrate(mpeg_version, layer, bitrate_bits):
     """ Get bitrate from given header data.
     
@@ -172,18 +172,18 @@ def get_bitrate(mpeg_version, layer, bitrate_bits):
         determined.
     
     """
-    
+
     # TODO: LOW: Free bitrate
     if bitrate_bits == 0:
         raise MPEGAudioHeaderException(
-                        'Free bitrate is not implemented, sorry.') 
-    
+                        'Free bitrate is not implemented, sorry.')
+
     try:
         return BITRATE[mpeg_version][layer][bitrate_bits]
     except (KeyError, IndexError):
         raise MPEGAudioHeaderException('Bitrate cannot be determined.')
 
-    
+
 def get_sample_rate(mpeg_version, bits):
     """Get sample rate by MPEG version and given MPEG Header sample rate bits.
     
@@ -206,7 +206,7 @@ def get_sample_rate(mpeg_version, bits):
         return SAMPLERATE[mpeg_version][bits]
     except (KeyError, TypeError, IndexError):
         raise MPEGAudioHeaderException('Sample rate cannot be determined.')
-    
+
 def get_channel_mode(bits):
     """Get channel mode.
     
@@ -220,8 +220,8 @@ def get_channel_mode(bits):
     :raise mpeg1audio.MPEGAudioHeaderException: Raised if channel mode cannot be 
         determined.
     """
-    
-    
+
+
     try:
         return CHANNEL_MODES[bits]
     except (IndexError, TypeError):
@@ -267,11 +267,11 @@ def get_emphasis(bits):
         determined.
     
     """
-    
-    
+
+
     try:
         return EMPHASES[bits]
-    except (TypeError, IndexError): 
+    except (TypeError, IndexError):
         raise MPEGAudioHeaderException('Emphasis cannot be determined.')
 
 def get_bytes(header_offset, chunk):
@@ -301,7 +301,7 @@ def get_bytes(header_offset, chunk):
     if len(header) != 4:
         raise MPEGAudioHeaderEOFException(
                                 'End of chunk reached, header not found.')
-    
+
     # Unpack 4 bytes (the header size)
     (header_bytes,) = struct.unpack(">I", header)
     return header_bytes
@@ -332,7 +332,7 @@ def get_samples_per_frame(mpeg_version, layer):
     except (IndexError):
         raise MPEGAudioHeaderException(
                             'Samples per frame cannot be determined.')
- 
+
 
 def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
     """Get size.
@@ -365,9 +365,9 @@ def get_frame_size(mpeg_version, layer, sample_rate, bitrate, padding_size):
         slotsize = SLOTS[layer]
     except (IndexError, KeyError, TypeError):
         raise MPEGAudioHeaderException('Frame size cannot be determined.')
-    
+
     bitrate_k = bitrate * 1000
-    
+
     framesize = int((coeff * bitrate_k / sample_rate) + padding_size) * slotsize
     if framesize <= 0:
         raise MPEGAudioHeaderException('Frame size cannot be calculated.')
@@ -422,7 +422,7 @@ def get_duration_from_sample_count(sample_count, sample_rate):
     
     """
     return timedelta(seconds=int(round(sample_count / sample_rate)))
-    
+
 def get_duration_from_size_bitrate(mpeg_size, bitrate):
     """Calculate duration from constant bitrate and MPEG Size.
     
@@ -443,7 +443,7 @@ def get_duration_from_size_bitrate(mpeg_size, bitrate):
         return timedelta(seconds=(mpeg_size / (bitrate * 1000) * 8))
     except ZeroDivisionError:
         raise MPEGAudioHeaderException('Duration cannot be determined.')
-    
+
 def get_vbr_frame_size(mpeg_size, frame_count):
     """Get VBR average frame size.
     
@@ -474,12 +474,12 @@ class MPEGAudioHeaderException(Exception):
         
         """
         super(MPEGAudioHeaderException, self).__init__(message)
-        
+
         self.mpeg_offset = mpeg_offset
         """MPEG Offset within file
         
         :type: int"""
-        
+
         self.bad_offset = bad_offset
         """Bad offset within file
         
